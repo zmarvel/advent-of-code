@@ -1,2 +1,2 @@
 (executables
-        (names day1a day1b day2a day2b day3a))
+        (names day1a day1b day2a day2b day3a day3b day3b_convert))

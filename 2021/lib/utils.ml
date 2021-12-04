@@ -85,15 +85,98 @@ let invert_array a =
 ;;
 
 
+(** Generalization of operation to create a new array by combining two other arrays.
+ *)
+let zip_array a1 a2 f =
+    (* Just assume they're the same length *)
+    Array.init (Array.length a1) (function i ->
+        f a1.(i) a2.(i)
+    )
+;;
+
+
 (** Element-wise vector addition.
  *)
 let add_array a1 a2 =
-    (* Just assume they're the same length *)
-    let out = Array.make (Array.length a1) 0 in
-    Array.iteri (fun i x -> Array.set out i ((Array.get a2 i) + x)) a1;
-    out
+    Array.map2 (+) a1 a2
 ;;
 
+
+(** Element-wise vector multiplication.
+ *)
+let multiply_array a1 a2 =
+    Array.map2 ( * ) a1 a2
+;;
+
+
+let init_matrix dim1 dim2 f =
+    Array.init dim1 (function i -> Array.init dim2 (function j -> f i j))
+;;
+
+
+let get_matrix_dims m =
+    let rows = Array.length m in
+    let cols = Array.length m.(0) in
+    rows, cols
+;;
+
+
+let matrix_transpose m =
+    let rows, cols = get_matrix_dims m in
+    init_matrix rows cols (fun i -> fun j -> m.(j).(i))
+;;
+
+
+(**
+ * Returns a new matrix resulting from applying [f] to each element of [m1] and [m2].
+ *)
+let matrix_map2 m1 m2 f =
+    let dim1, dim2 = get_matrix_dims m1 in
+    init_matrix dim1 dim2 (fun i -> fun j -> f m1.(i).(j) m2.(i).(j))
+;;
+
+(** Element-wise matrix multiplication *)
+let matrix_multiply m1 m2 =
+    matrix_map2 m1 m2 ( * )
+;;
+
+(** Element-wise matrix addition *)
+let matrix_add m1 m2 =
+    matrix_map2 m1 m2 (+)
+;;
+
+
+let array_sum a =
+    Array.fold_left (+) 0 a
+;;
+
+
+let matrix_sum m =
+    Array.fold_left (fun acc -> fun row ->
+        acc + (array_sum row)) 0 m
+;;
+
+
+(** Apply [f] to all cells of [m], returning the result in a new matrix. *)
+let matrix_map m f =
+    Array.map (fun row -> Array.map f row) m
+;;
+
+
+let print_matrix m =
+    Printf.printf "[\n";
+    Array.iter (fun row ->
+        Printf.printf "  ";
+        print_array row;
+        Printf.printf "\n") m;
+    Printf.printf "]";
+;;
+
+
+let reverse_array a =
+    let len = Array.length a in
+    Array.init len (function i -> a.(len - i - 1))
+;;
 
 
 (* Produces an array representing a mask [m], where [m[i]] is 1 when [a[i] > threshold].

@@ -1,0 +1,3 @@
+(test
+    (name utils_test)
+    (libraries utils ounit2))

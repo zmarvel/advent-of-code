@@ -21,15 +21,6 @@ let test_array_sum _ =
 ;;
 
 
-let test_multiply_rows _ =
-    let multiply_rows m =
-        Array.fold_left (fun acc -> fun row -> multiply_array acc row) (Array.make 5 1) m
-    in
-    let m = Array.make_matrix 5 5 2 in
-    let result = multiply_rows m in
-    assert_equal result (Array.make 5 32);
-;;
-
 
 let test_matrix_transpose _ =
     let m = [| [| 1; 2; 3; 4; 5 |] ;
@@ -83,50 +74,12 @@ let is_winning_mask (mask : int array array) =
 ;;
 
 
-let test_is_winning_mask _ =
-    let mask = [|
-        Array.make 5 1 ;
-    |] in
-    assert_equal (is_winning_mask mask) false;
-    let mask = [|
-        Array.make 5 0 ;
-    |] in
-    assert_equal (is_winning_mask mask) true;
-    let mask = [|
-        Array.make 5 1 ;
-        Array.make 5 0 ;
-    |] in
-    assert_equal (is_winning_mask mask) true;
-    let mask = [|
-        Array.make 5 0 ;
-        Array.make 5 1 ;
-    |] in
-    assert_equal (is_winning_mask mask) true;
-    let mask = [|
-        Array.make 5 1 ;
-        Array.make 5 1 ;
-    |] in
-    assert_equal (is_winning_mask mask) false;
-    let mask = [|
-        [| 1 ; 1 ; 1 ; 1 ; 1 |] ;
-        [| 0 ; 1 ; 1 ; 0 ; 0 |] ;
-        [| 1 ; 1 ; 0 ; 1 ; 1 |] ;
-        [| 1 ; 0 ; 1 ; 1 ; 0 |] ;
-        [| 1 ; 1 ; 1 ; 1 ; 1 |] ;
-    |] in
-    assert_equal (is_winning_mask mask) false;
-;;
-
-
-
 
 let suite = "Test AOC Utils" >::: [
     "test_multiply_array" >:: test_multiply_array ;
     "test_array_sum" >:: test_array_sum ;
     "test_matrix_multiply" >:: test_matrix_multiply ;
-    "test_multiply_rows" >:: test_multiply_rows ;
     "test_matrix_transpose" >:: test_matrix_transpose ;
-    "test_is_winning_mask " >:: test_is_winning_mask
 ];;
 
 let () =

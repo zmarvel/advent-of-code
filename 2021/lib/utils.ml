@@ -123,7 +123,7 @@ let get_matrix_dims m =
 
 let matrix_transpose m =
     let rows, cols = get_matrix_dims m in
-    init_matrix rows cols (fun i -> fun j -> m.(j).(i))
+    init_matrix cols rows (fun i -> fun j -> m.(j).(i))
 ;;
 
 

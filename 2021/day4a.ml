@@ -109,16 +109,19 @@ let load_file inc =
  * When a cell is 0, it has been "covered."
  *)
 let is_winning_mask (mask : int array array) =
-    let multiply_rows m =
-        Array.fold_left (fun acc -> fun row -> multiply_array acc row) (Array.make 5 1) m
+    let sum_rows m =
+        Array.map (fun row -> array_sum row) m
     in
-    (* Multiply adjacent rows. If the resulting array is all 0, the board is winning *)
-    let row_result = multiply_rows mask in
-    (array_sum row_result = 0) || (
+    let exists_zero a =
+        Array.mem 0 a
+    in
+    (* Add each row. If any of the results are 0, the board is winning. *)
+    let row_result = sum_rows mask in
+    (exists_zero row_result) || (
         (* Do the same for columns *)
         let mask_t = matrix_transpose mask in
-        let col_result = multiply_rows mask_t in
-        array_sum col_result = 0
+        let col_result = sum_rows mask_t in
+        exists_zero col_result
     )
 ;;
 
@@ -154,20 +157,24 @@ let do_game nums boards =
                     let board = boards.(iboard) in
                     let board_mask = covered_mask.(iboard) in
                     let board_mask' = matrix_multiply board_mask (mask_num_in_board num board) in
+                    (*
                     Printf.printf "mask=";
                     print_matrix board_mask';
                     Printf.printf "\n";
                     Printf.printf "board=";
                     print_matrix board;
                     Printf.printf "\n";
+                    *)
+                    covered_mask.(iboard) <- board_mask';
                     if is_winning_mask board_mask' then (
                         let masked_board = matrix_multiply board board_mask' in
+                        (*
                         Printf.printf "masked_board=";
                         print_matrix masked_board;
                         Printf.printf "\n----------------------------------------------------------------------\n";
+                        *)
                         Some(masked_board))
                     else begin
-                        covered_mask.(iboard) <- board_mask';
                         board_loop (succ iboard)
                     end
             in
@@ -175,7 +182,10 @@ let do_game nums boards =
             | Some(winner) -> (num, winner)
             | None -> num_loop (succ inum)
     in
-    num_loop 0
+    let num, winner = num_loop 0 in
+    let winner_sum = Array.fold_left (fun acc -> fun row -> acc + array_sum row) 0 winner in
+    let final_answer = winner_sum * num in
+    final_answer
 ;;
 
 
@@ -183,16 +193,14 @@ let process_file filename =
     Printf.printf "filename=%s\n" filename;
     let inc = open_in filename in
     let nums, boards = load_file inc in
-    let num, winner = do_game nums boards in
+    let answer = do_game nums boards in
 
-    Printf.printf "num=%d\nwinner=" num;
-    print_matrix winner;
-
+    Printf.printf "answer=%d\n" answer;
     Printf.printf "\n";
 ;;
 
 
 let () =
     process_file "4-test.input";
-    (* process_file "4.input"; *)
+    process_file "4.input";
 ;;

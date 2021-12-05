@@ -173,6 +173,27 @@ let print_matrix m =
 ;;
 
 
+let format_array_of_int a =
+    let b = Buffer.create 16 in
+    Buffer.add_string b "[| ";
+    Array.iter (fun n -> Buffer.add_string b (Printf.sprintf "%d " n)) a;
+    Buffer.add_string b "|]";
+    Buffer.contents b
+;;
+
+
+let format_matrix_of_int m =
+    let b = Buffer.create 16 in
+    Buffer.add_string b "[| \n";
+    Array.iter (fun row ->
+        Buffer.add_string b "   ";
+        Buffer.add_string b (format_array_of_int row);
+        Buffer.add_string b "\n") m;
+    Buffer.add_string b "|]";
+    Buffer.contents b
+;;
+
+
 let reverse_array a =
     let len = Array.length a in
     Array.init len (function i -> a.(len - i - 1))
@@ -183,6 +204,11 @@ let reverse_array a =
  *)
 let array_greater_than threshold a =
     Array.map (fun x -> if x > threshold then 1 else 0) a
+;;
+
+
+let matrix_greater_than threshold m =
+    Array.map (array_greater_than threshold) m
 ;;
 
 
@@ -211,4 +237,29 @@ let partition_point a start stop pred =
                 loop (succ i)
     in
     loop start
+;;
+
+
+let format_list_of_string ls =
+    let b = Buffer.create 64 in 
+    Buffer.add_string b "[ ";
+    let rec loop ls =
+        match ls with
+        | s :: rst ->
+            begin
+                Buffer.add_string b s;
+                Buffer.add_string b " ";
+                loop rst
+            end
+        | [] -> ()
+    in
+    loop ls;
+    Buffer.add_string b "]";
+    Buffer.contents b
+;;
+
+
+(** Format a list of integers as a string. Does not include a final newline. *)
+let format_list_of_int ls =
+    format_list_of_string (List.map string_of_int ls)
 ;;

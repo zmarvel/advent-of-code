@@ -29,8 +29,9 @@ let load_file inc =
 (** Slide all elements in a to the left one slot (creates a new array).
     *)
 let array_slide_left a =
+    let n = Array.length a in
     Array.mapi (fun i -> fun x ->
-        if i < (Array.length a) - 1 then
+        if i < n - 1 then
             a.(i + 1)
         else
             x
@@ -49,7 +50,9 @@ let do_game ages days =
         else
             let num_new = ages.(0) in
             let ages' = array_slide_left ages in
+            ages'.(6) <- ages'.(6) + num_new;
             ages'.(8) <- num_new;
+            (* Printf.printf "ages=%s ages'=%s num_new=%d\n" (format_array_of_int ages) (format_array_of_int ages') num_new; *)
             day_loop (succ i) ages'
     in
     let final_ages = day_loop 0 ages in
@@ -75,5 +78,5 @@ let process_file filename =
 
 let () =
     process_file "6-test.input";
-    (* process_file "6.input"; *)
+    process_file "6.input";
 ;;

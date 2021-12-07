@@ -109,6 +109,19 @@ let multiply_array a1 a2 =
 ;;
 
 
+(** Slide all elements in a to the left one slot (creates a new array).
+    *)
+let array_slide_left a =
+    let n = Array.length a in
+    Array.mapi (fun i -> fun x ->
+        if i < n - 1 then
+            a.(i + 1)
+        else
+            x
+    ) a
+;;
+
+
 let init_matrix dim1 dim2 f =
     Array.init dim1 (function i -> Array.init dim2 (function j -> f i j))
 ;;

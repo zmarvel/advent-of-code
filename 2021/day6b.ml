@@ -26,20 +26,6 @@ let load_file inc =
 ;;
 
 
-(** Slide all elements in a to the left one slot (creates a new array).
-    *)
-let array_slide_left a =
-    let n = Array.length a in
-    Array.mapi (fun i -> fun x ->
-        if i < n - 1 then
-            a.(i + 1)
-        else
-            x
-    ) a
-;;
-
-
-
 (** Run the simulated game, looping through all the fish each iteration until the desired day is
     reached. [ages] is an array of fish ages, and [days] is how many days should be simulated.
  *)

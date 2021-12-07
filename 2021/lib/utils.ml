@@ -122,6 +122,27 @@ let array_slide_left a =
 ;;
 
 
+(** Add a scalar [x] to all elements of an array.
+   *)
+let array_add_scalar a x =
+    Array.map (fun y -> x + y) a
+;;
+
+
+(** Subtract a scalar [x] from all elements of an array.
+   *)
+let array_sub_scalar a x =
+    array_add_scalar a ((-1) * x)
+;;
+
+
+(** Calculate the sum of all elements of an array of int.
+   *)
+let array_sum a =
+    Array.fold_left (+) 0 a
+;;
+
+
 let init_matrix dim1 dim2 f =
     Array.init dim1 (function i -> Array.init dim2 (function j -> f i j))
 ;;
@@ -158,10 +179,6 @@ let matrix_add m1 m2 =
     matrix_map2 m1 m2 (+)
 ;;
 
-
-let array_sum a =
-    Array.fold_left (+) 0 a
-;;
 
 
 let matrix_sum m =

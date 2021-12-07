@@ -1,0 +1,100 @@
+(*
+--- Day 7: The Treachery of Whales ---
+
+A giant whale has decided your submarine is its next meal, and it's much faster than you are. There's nowhere to run!
+
+Suddenly, a swarm of crabs (each in its own tiny submarine - it's too deep for them otherwise) zooms in to rescue you! They seem to be preparing to blast a hole in the ocean floor; sensors indicate a massive underground cave system just beyond where they're aiming!
+
+The crab submarines all need to be aligned before they'll have enough power to blast a large enough hole for your submarine to get through. However, it doesn't look like they'll be aligned before the whale catches you! Maybe you can help?
+
+There's one major catch - crab submarines can only move horizontally.
+
+You quickly make a list of the horizontal position of each crab (your puzzle input). Crab submarines have limited fuel, so you need to find a way to make all of their horizontal positions match while requiring them to spend as little fuel as possible.
+
+For example, consider the following horizontal positions:
+
+16,1,2,0,4,2,7,1,2,14
+
+This means there's a crab with horizontal position 16, a crab with horizontal position 1, and so on.
+
+Each change of 1 step in horizontal position of a single crab costs 1 fuel. You could choose any horizontal position to align them all on, but the one that costs the least fuel is horizontal position 2:
+
+    Move from 16 to 2: 14 fuel
+    Move from 1 to 2: 1 fuel
+    Move from 2 to 2: 0 fuel
+    Move from 0 to 2: 2 fuel
+    Move from 4 to 2: 2 fuel
+    Move from 2 to 2: 0 fuel
+    Move from 7 to 2: 5 fuel
+    Move from 1 to 2: 1 fuel
+    Move from 2 to 2: 0 fuel
+    Move from 14 to 2: 12 fuel
+
+This costs a total of 37 fuel. This is the cheapest possible outcome; more expensive outcomes include aligning at position 1 (41 fuel), position 3 (39 fuel), or position 10 (71 fuel).
+
+Determine the horizontal position that the crabs can align to using the least fuel possible. How much fuel must they spend to align to that position?
+*)
+
+
+open Utils;;
+
+
+(** Load an array of fish positions
+ *)
+let load_file inc =
+    match input_line_opt inc with
+    | Some(line) ->
+            line
+            |> String.trim
+            |> String.split_on_char ','
+            |> Array.of_list
+            |> Array.map int_of_string
+    | None -> Array.make 0 0
+;;
+
+
+(* Does it make sense to start near the median? (If the answer is in the dataset, then the median
+ *is* the answer: see geometric median.) See also Weiszfeld's algorithm. The most basic solution is
+ to "try them all" (brute-force).
+
+ An observation wrt the median idea is that there are two possibilities: the minimal-distance point
+ is already in the list, or it isn't. But it must be between the smallest and largest in the list,
+ so we can use those values as loop boundaries.
+ *)
+
+
+let do_game crabs =
+    Array.sort compare crabs;
+    let n = Array.length crabs in
+    let start = crabs.(0) in
+    let stop = crabs.(n - 1) in
+    let rec loop i total_distance =
+        if i = stop then
+            total_distance
+        else
+            let distance_to = array_sub_scalar crabs i in
+            let total_distance' = array_sum distance_to in
+            loop (succ i) (if total_distance' < total_distance then total_distance' else total_distance)
+    in
+    loop start stop
+;;
+
+
+let process_file filename =
+    let inc = open_in filename in
+    let crabs = load_file inc in
+    Printf.printf "filename=%s\n" filename;
+    let min_distance = do_game crabs in
+    Printf.printf "min_distance=%d\n" min_distance;
+
+    Printf.printf "\n";
+;;
+
+
+(* 588 is too low *)
+
+
+let () =
+    process_file "6-test.input";
+    process_file "6.input";
+;;

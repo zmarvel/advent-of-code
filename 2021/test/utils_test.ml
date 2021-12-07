@@ -14,6 +14,29 @@ let test_multiply_array _ =
 ;;
 
 
+let test_array_abs _ =
+    let a = Array.init 6 (fun i -> i) in
+    assert_equal (array_abs a) a;
+    let a_negative = Array.init 6 (fun i -> (-i)) in
+    assert_equal (array_abs a_negative) a;
+;;
+
+
+let test_array_add_scalar _ =
+    let a = Array.make 6 1 in
+    assert_equal (array_add_scalar a 3) (Array.make 6 4);
+    assert_equal (array_add_scalar a (-3)) (Array.make 6 (-2));
+;;
+
+
+let test_array_sub_scalar _ =
+    let a = Array.make 6 1 in
+    assert_equal (array_sub_scalar a 2) (Array.make 6 (-1));
+    let a = Array.make 6 5 in
+    assert_equal (array_sub_scalar a 2) (Array.make 6 3);
+;;
+
+
 let test_array_sum _ =
     let a = Array.make 6 0 in
     let a = Array.mapi (fun i -> fun _ -> i) a in
@@ -77,6 +100,9 @@ let is_winning_mask (mask : int array array) =
 
 let suite = "Test AOC Utils" >::: [
     "test_multiply_array" >:: test_multiply_array ;
+    "test_array_abs" >:: test_array_abs ;
+    "test_array_add_scalar" >:: test_array_add_scalar ;
+    "test_array_sub_scalar" >:: test_array_sub_scalar ;
     "test_array_sum" >:: test_array_sum ;
     "test_matrix_multiply" >:: test_matrix_multiply ;
     "test_matrix_transpose" >:: test_matrix_transpose ;

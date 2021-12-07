@@ -68,15 +68,18 @@ let do_game crabs =
     let n = Array.length crabs in
     let start = crabs.(0) in
     let stop = crabs.(n - 1) in
+    Printf.printf "start=%d stop=%d crabs=%s\n" start stop (format_array_of_int crabs);
     let rec loop i total_distance =
-        if i = stop then
+        if i > stop then
             total_distance
         else
-            let distance_to = array_sub_scalar crabs i in
+            let distance_to = array_abs (array_sub_scalar crabs i) in
             let total_distance' = array_sum distance_to in
+            (* Printf.printf "i=%d distance_to=%s total_distance=%d total_distance'=%d\n" i
+             (format_array_of_int distance_to) total_distance total_distance'; *)
             loop (succ i) (if total_distance' < total_distance then total_distance' else total_distance)
     in
-    loop start stop
+    loop start 999999
 ;;
 
 
@@ -95,6 +98,6 @@ let process_file filename =
 
 
 let () =
-    process_file "6-test.input";
-    process_file "6.input";
+    process_file "7-test.input";
+    process_file "7.input";
 ;;

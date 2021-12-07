@@ -122,6 +122,11 @@ let array_slide_left a =
 ;;
 
 
+let array_abs a =
+    Array.map abs a
+;;
+
+
 (** Add a scalar [x] to all elements of an array.
    *)
 let array_add_scalar a x =

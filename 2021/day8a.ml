@@ -78,7 +78,7 @@ open Utils;;
 
 (** Load an array of fish positions
  *)
-let load_file inc : in_channel =
+let load_file inc =
     let rec helper entries =
         match input_line_opt inc with
         | Some(line) ->
@@ -95,20 +95,66 @@ let load_file inc : in_channel =
                 helper ((input, output) :: entries)
         | None -> entries
     in
-    Array.of_list (helper [])
+    reverse_array (Array.of_list (helper []))
 ;;
 
 
-(* let do_game inputs outputs =
-;; *)
+(** Assumes s1 and s2 are the same length. Produces a list of pairs [(s1.[i], s2.[i])] *)
+let zip_strings s1 s2 =
+    if String.length s1 <> String.length s2 then
+        Printf.printf "ERROR: Unmatched strings: %s %s\n" s1 s2;
+    let rec loop i =
+        if i < 0 then
+            []
+        else
+            (s1.[i], s2.[i]) :: (loop (pred i))
+    in
+    loop (String.length s1 - 1)
+;;
+
+
+let find_unique_segments input =
+    Array.fold_left (fun acc -> fun num ->
+        let new_pairs =
+            match String.length num with
+            (* We need the association in reverse: decode instead of encode *)
+            | 2 (* 1 *) -> zip_strings num "cf"
+            | 4 (* 4 *) -> zip_strings num "bcdf"
+            | 3 (* 7 *) -> zip_strings num "acf"
+            | 7 (* 8 *) -> zip_strings num "abcdefg"
+            | _ -> acc
+        in
+        (* TODO: How does the order affect complexity here? *)
+        List.rev_append new_pairs acc
+    ) [] input
+;;
+
+
+let do_game entries =
+    Array.fold_left (fun acc -> fun entry ->
+        let (input : string array), (output : string array) = entry in
+        let unique_segments = find_unique_segments input in
+        (* Now, find the outputs where all the letters are associated in unique_segments *)
+        let decodable_outputs =
+            Array.fold_left (fun acc -> fun out ->
+                (* TODO: If this is too slow, consider searching the array for each unique_segment
+                 * instead of the other way around *)
+                if string_for_all (fun c -> List.mem_assoc c unique_segments) out then
+                    out :: acc
+                else
+                    acc
+            ) [] output
+        in
+        acc + (List.length decodable_outputs)
+    ) 0 entries
+;;
 
 
 let process_file filename =
     let inc = open_in filename in
     let entries = load_file inc in
-    let inputs, outputs = array_split entries in
-    Printf.printf "inputs=%s\n" (format_array_of_string inputs);
-    Printf.printf "outputs=%s\n" (format_array_of_string outputs);
+    let num_decodable = do_game entries in
+    Printf.printf "result=%d\n" num_decodable;
 
     Printf.printf "\n";
 ;;

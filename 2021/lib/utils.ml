@@ -164,6 +164,19 @@ let array_split a =
 ;;
 
 
+(** Introduced in OCaml 4.13.0 *)
+let string_for_all (pred : char -> bool) (s : string): bool =
+    let n = String.length s in
+    let rec helper i =
+        if i = n then
+            true
+        else
+            (pred s.[i]) && (helper (succ i))
+    in
+    helper 0
+;;
+
+
 let init_matrix dim1 dim2 f =
     Array.init dim1 (function i -> Array.init dim2 (function j -> f i j))
 ;;

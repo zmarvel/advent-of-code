@@ -148,6 +148,22 @@ let array_sum a =
 ;;
 
 
+(** Introduced in OCaml 4.13.0 *)
+let array_split a =
+    let a1 =
+        Array.init (Array.length a) (fun i ->
+            let x1, _ = a.(i) in
+            x1)
+    in
+    let a2 =
+        Array.init (Array.length a) (fun i ->
+            let _, x2 = a.(i) in
+            x2)
+    in
+    (a1, a2)
+;;
+
+
 let init_matrix dim1 dim2 f =
     Array.init dim1 (function i -> Array.init dim2 (function j -> f i j))
 ;;
@@ -208,14 +224,23 @@ let print_matrix m =
 ;;
 
 
-let format_array_of_int a =
+let format_array a fmt =
     let b = Buffer.create 16 in
     Buffer.add_string b "[| ";
-    Array.iter (fun n -> Buffer.add_string b (Printf.sprintf "%d " n)) a;
+    Array.iter (fun n -> Buffer.add_string b (fmt n); Buffer.add_string b " ";) a;
     Buffer.add_string b "|]";
     Buffer.contents b
 ;;
 
+
+let format_array_of_int a =
+    format_array a (Printf.sprintf "%d")
+;;
+
+
+let format_array_of_string a =
+    format_array a (fun s -> s)
+;;
 
 let format_matrix_of_int m =
     let b = Buffer.create 16 in

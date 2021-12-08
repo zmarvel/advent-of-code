@@ -113,7 +113,7 @@ let zip_strings s1 s2 =
 ;;
 
 
-let find_unique_segments input =
+let find_unique_segments (displays : string array) =
     Array.fold_left (fun acc -> fun num ->
         let new_pairs =
             match String.length num with
@@ -122,18 +122,30 @@ let find_unique_segments input =
             | 4 (* 4 *) -> zip_strings num "bcdf"
             | 3 (* 7 *) -> zip_strings num "acf"
             | 7 (* 8 *) -> zip_strings num "abcdefg"
-            | _ -> acc
+            | _ -> []
         in
         (* TODO: How does the order affect complexity here? *)
         List.rev_append new_pairs acc
-    ) [] input
+    ) [] displays
+;;
+
+let count_unique_segments (displays : string array) =
+    Array.fold_left (fun acc -> fun num ->
+        let new_pairs =
+            match String.length num with
+            | 2 | 4 | 3 | 7 (* 1, 4, 7, 8 *) -> 1
+            | _ -> 0
+        in
+        acc + new_pairs
+    ) 0 displays
 ;;
 
 
 let do_game entries =
     Array.fold_left (fun acc -> fun entry ->
-        let (input : string array), (output : string array) = entry in
-        let unique_segments = find_unique_segments input in
+        let _, output = entry in
+        let unique_segments = count_unique_segments output in
+        (* let unique_segments = find_unique_segments input in
         (* Now, find the outputs where all the letters are associated in unique_segments *)
         let decodable_outputs =
             Array.fold_left (fun acc -> fun out ->
@@ -145,7 +157,8 @@ let do_game entries =
                     acc
             ) [] output
         in
-        acc + (List.length decodable_outputs)
+        acc + (List.length decodable_outputs) *)
+        acc + unique_segments
     ) 0 entries
 ;;
 
@@ -165,5 +178,5 @@ let process_file filename =
 
 let () =
     process_file "8-test.input";
-    (* process_file "8.input"; *)
+    process_file "8.input";
 ;;

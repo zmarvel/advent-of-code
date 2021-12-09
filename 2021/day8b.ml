@@ -118,6 +118,146 @@ let count_unique_segments (displays : string array) =
     ) 0 displays
 ;;
 
+let convert_char c =
+    (int_of_char c) - (int_of_char 'a')
+;;
+
+
+let encode_string s =
+    let n = String.length s in
+    let loop i encoded =
+        if i = n then encoded
+        else
+            let pos = convert_char s.[i] in
+            encoded lor (1 lsl pos)
+    in
+    loop 0 0
+;;
+
+
+let resolve signals =
+    (* This will map from an integer to a mask. For example, A is index 0. If signal A maps to
+       signal G, then [marks.(0) = 0b0000001]. *)
+    let marks = Array.make 7 -1 in
+    let a_pos = convert_char 'a' in
+    let b_pos = convert_char 'b' in
+    let c_pos = convert_char 'c' in
+    let d_pos = convert_char 'd' in
+    let e_pos = convert_char 'e' in
+    let f_pos = convert_char 'f' in
+    let g_pos = convert_char 'g' in
+    let one = array_find (fun x -> String.length x = 2) signals in
+    let one_encoded = encode_string one in
+    let seven = array_find (fun x -> String.length x = 3) signals in
+    let seven_encoded = encode_string seven in
+    let four = array_find (fun x -> String.length x = 4) signals in
+    let four_encoded = encode_string four in
+    let nine = array_find (fun x ->
+        String.length x = 6 && (encode_string x land one_encoded) = one_encoded) in
+    let six = array_find (fun x ->
+        String.length x = 6 && (encode_string x land one_encoded) <> one_encoded) in
+    let nine_encoded = encode_string nine in
+    let six_encoded = encode_string six in
+    let mask_c = (six_encoded lxor nine_encoded) land one_encoded in
+    let mask_e = (six_encoded lxor nine_encoded) lxor one_encoded in
+    let mask_f = one_encoded lxor mask_c in
+    let rec helper =
+        if Array.for_all (fun x -> x <> (-1)) then
+            marks
+        else
+            if marks.(a_pos) = (-1) then
+                (* If A is not marked, we have not found 1 and 7 *)
+                let mask_a = one_encoded lxor seven_encoded in
+                marks.(a_pos) <- mask_a;
+                helper
+            else if marks.(c_pos) = (-1) then
+                (* If C is not marked, we have not found 6 and 9 *)
+                (* Find 9 by identifying the 6-segment set of signals that overlaps 1 *)
+                marks.(c_pos) <- mask_c;
+                marks.(e_pos) <- mask_e;
+                helper
+            else if marks.(b_pos) = (-1) then
+                (* If B is not marked, we have not found 2 and 5 *)
+                let two = array_find (fun x ->
+                    String.length x = 5 && (encode_string x land marks.(e_pos)) = marks.(e_pos))
+                in
+                let five = array_find (fun x ->
+                    (* TODO this will find either 5 or 3 *)
+                    String.length x = 5 && (encode_string x land marks.(e_pos)) <> marks.(e_pos))
+                in
+                let two_encoded = encode_string two in
+                let five_encoded = encode_string five in
+                
+    in
+;;
+
+
+let encode_int n =
+    match n with
+    | 0 -> 0b1110111
+    | 1 -> 0b0010010
+    | 2 -> 0b1011101
+    | 3 -> 0b1011011
+    | 4 -> 0b0111010
+    | 5 -> 0b1101011
+    | 6 -> 0b1101111
+    | 7 -> 0b1010010
+    | 8 -> 0b1111111
+    | 9 -> 0b1111011
+;;
+
+let decode_int n =
+    match n with
+    | 0b1110111 -> 0
+    | 0b0010010 -> 1
+    | 0b1011101 -> 2
+    | 0b1011011 -> 3
+    | 0b0111010 -> 4
+    | 0b1101011 -> 5
+    | 0b1101111 -> 6
+    | 0b1010010 -> 7
+    | 0b1111111 -> 8
+    | 0b1111011 -> 9
+;;
+
+
+
+let decode_signals inputs =
+    (* map is int -> int, representing the integer being drawn and the segments that are on as an
+        integer. For example, suppose segments c and f are on when 1 is being drawn. The pair would
+        look like (1, 0b0010010). *)
+    let rec loop i map =
+        if = Array.length inputs then
+            map
+        else
+            let input = inputs.(i) in
+            match String.length input with
+            | 2 (* 1 *) -> 1 (* 1, input *)
+            | 4 (* 4 *) -> 4
+            | 3 (* 7 *) -> 7
+            | 7 (* 8 *) -> 8
+            | 5 (* 2, 3, 5 *) ->
+                    
+                    ""
+            | 6 (* 0, 6, 9 *) ->
+                    ""
+
+    in
+;;
+
+
+let rec decode entries map =
+    let rec display_loop i =
+        if i = Array.length entries then
+            map
+        else
+            let input, output = entries.(i) in
+            decode_signals input
+    in
+;;
+
+;;
+
 
 let do_game entries =
     Array.fold_left (fun acc -> fun entry ->

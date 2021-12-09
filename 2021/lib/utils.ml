@@ -165,6 +165,36 @@ let array_split a =
 
 
 (** Introduced in OCaml 4.13.0 *)
+let array_find_opt (pred : 'a -> bool) (a : 'a array) : 'a option =
+    let n = Array.length a in
+    let rec loop i =
+        if i = n then
+            None
+        else
+            let x = a.(i) in
+            if pred x then Some(x)
+            else loop (succ i)
+    in
+    loop 0
+;;
+
+
+let array_find pred a =
+    (array_find_opt pred a).get
+;;
+
+
+let string_fold_left (f : 'a -> char -> 'a) (init : 'a) (s : string) : 'a =
+    let n = String.length s in
+    let rec loop i acc =
+        if i = n then acc
+        else loop (succ i) (f acc s.[i])
+    in
+    loop 0 init
+;;
+
+
+(** Introduced in OCaml 4.13.0 *)
 let string_for_all (pred : char -> bool) (s : string): bool =
     let n = String.length s in
     let rec helper i =

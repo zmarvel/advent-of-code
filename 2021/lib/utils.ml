@@ -180,7 +180,7 @@ let array_find_opt (pred : 'a -> bool) (a : 'a array) : 'a option =
 
 
 let array_find pred a =
-    (array_find_opt pred a).get
+    Option.get (array_find_opt pred a)
 ;;
 
 

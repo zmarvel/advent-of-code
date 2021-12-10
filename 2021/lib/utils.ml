@@ -285,6 +285,7 @@ let format_array_of_string a =
     format_array a (fun s -> s)
 ;;
 
+
 let format_matrix_of_int m =
     let b = Buffer.create 16 in
     Buffer.add_string b "[| \n";

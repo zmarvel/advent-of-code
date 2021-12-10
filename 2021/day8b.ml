@@ -156,6 +156,9 @@ let encode_string s =
  *)
 
 
+(** Return a mapping from input signal number to the segment that will actually be displayed (this
+    mapping has to be reversed to decode the given "outputs").
+   *)
 let resolve signals =
     (* This will map from an integer to a mask. For example, A is index 0. If signal A maps to
        signal G, then [marks.(0) = 0b0000001]. *)
@@ -168,21 +171,26 @@ let resolve signals =
     let f_pos = convert_char 'f' in
     let g_pos = convert_char 'g' in
     let one = array_find (fun x -> String.length x = 2) signals in
-    Printf.printf "one = %s\n" one;
     let one_encoded = encode_string one in
-    Printf.printf "one_encoded = %x\n" one_encoded;
     let seven = array_find (fun x -> String.length x = 3) signals in
     let seven_encoded = encode_string seven in
     let four = array_find (fun x -> String.length x = 4) signals in
     let four_encoded = encode_string four in
+    (* Printf.printf "four=%s four_encoded=%x\n" four four_encoded; *)
+    (* Ooops, what about zero? *)
     let nine = array_find (fun x ->
-        String.length x = 6 && (encode_string x land one_encoded) = one_encoded) signals in
+        String.length x = 6 && (encode_string x land four_encoded) = four_encoded) signals in
     let six = array_find (fun x ->
         String.length x = 6 && (encode_string x land one_encoded) <> one_encoded) signals in
     let nine_encoded = encode_string nine in
     let six_encoded = encode_string six in
+    (* Printf.printf "six=%s six_encoded=%x\n" six six_encoded;
+    Printf.printf "nine=%s nine_encoded=%x\n" nine nine_encoded; *)
+    (* Printf.printf "(six_encoded lxor nine_encoded)=%x\n" (six_encoded lxor nine_encoded); *)
+    (* Printf.printf "((six_encoded lxor nine_encoded) land one_encoded)=%x\n" ((six_encoded lxor
+       nine_encoded) land one_encoded); *)
     let mask_c = (six_encoded lxor nine_encoded) land one_encoded in
-    let mask_e = (six_encoded lxor nine_encoded) lxor one_encoded in
+    let mask_e = (six_encoded lxor nine_encoded) land (lnot one_encoded) in
     let mask_f = one_encoded lxor mask_c in
     let rec helper () =
         if Array.for_all (fun x -> x <> (-1)) marks then
@@ -201,6 +209,9 @@ let resolve signals =
                 marks.(c_pos) <- mask_c;
                 marks.(e_pos) <- mask_e;
                 marks.(f_pos) <- mask_f;
+                (* Printf.printf "mask_c=%x\n" mask_c;
+                Printf.printf "mask_e=%x\n" mask_e;
+                Printf.printf "mask_f=%x\n" mask_f; *)
                 helper ()
             end
             (* Populate B *)
@@ -214,23 +225,35 @@ let resolve signals =
                 in
                 let two_encoded = encode_string two in
                 let five_encoded = encode_string five in
-                let mask_b = ((two_encoded lxor five_encoded) lxor one_encoded) lxor mask_e in
+                let mask_b = (two_encoded lxor five_encoded) land (lnot (one_encoded lor mask_e)) in
+                (* Printf.printf "mask_e=%x\n" mask_e;
+                Printf.printf "mask_b=%x\n" mask_b; *)
                 marks.(b_pos) <- mask_b;
                 helper ()
             (* Populate D and G *)
             else if marks.(d_pos) = (-1) then
                 (* If D is not marked, we can figure it out from 4 *)
-                let mask_d = (four_encoded lxor one_encoded) lxor marks.(b_pos) in
+                let mask_d = (four_encoded land (lnot one_encoded)) lxor marks.(b_pos) in
                 marks.(d_pos) <- mask_d;
                 (* Then G is the only remaining position *)
-                let mask_g = (nine_encoded lxor four_encoded) lxor seven_encoded in
+                let mask_g = (nine_encoded lxor four_encoded) land (lnot seven_encoded) in
+                (* Printf.printf "mask_g=%x\n" mask_g; *)
                 marks.(g_pos) <- mask_g;
                 helper ()
             else
                 marks
     in
-    helper ()
+    let marks = helper () in
+    (* Array.iter (fun mark ->
+        Printf.printf "%x " mark
+    ) marks;
+    Printf.printf "\n"; *)
+    (* pos 3 and 4 in marks have more than 1 bit set, corresponding to d and e *)
+    marks
 ;;
+
+
+exception Invalid_digit of int
 
 
 let encode_int n =
@@ -245,10 +268,13 @@ let encode_int n =
     | 7 -> 0b1010010
     | 8 -> 0b1111111
     | 9 -> 0b1111011
-    | _ -> -1
+    | _ -> raise (Invalid_digit n)
 ;;
 
-(*
+
+exception Invalid_signals of string
+
+
 let decode_int n =
     match n with
     | 0b1110111 -> 0
@@ -261,8 +287,23 @@ let decode_int n =
     | 0b1010010 -> 7
     | 0b1111111 -> 8
     | 0b1111011 -> 9
+    | _ -> raise (Invalid_signals (Printf.sprintf "%x" n))
 ;;
-*)
+
+exception Invalid_mask of string
+
+let mask_to_int m =
+    match m with 
+    | 0b1000000 -> 1
+    | 0b0100000 -> 2
+    | 0b0010000 -> 3
+    | 0b0001000 -> 4
+    | 0b0000100 -> 5
+    | 0b0000010 -> 6
+    | 0b0000001 -> 7
+    | _ -> raise (Invalid_mask (Printf.sprintf "%x" m))
+;;
+
 let mask_to_char m =
     match m with 
     | 0b1000000 -> 'a'
@@ -272,7 +313,7 @@ let mask_to_char m =
     | 0b0000100 -> 'e'
     | 0b0000010 -> 'f'
     | 0b0000001 -> 'g'
-    | _ -> 'X'
+    | _ -> raise (Invalid_mask (Printf.sprintf "%x" m))
 ;;
 
 let decode_mask n =
@@ -297,25 +338,85 @@ let decode_mask n =
 ;;
 
 
+(** Reverse the mapping represented by [a]. In other words, if [a.(i) = j], return an array where
+    [a.(j) = i]. Assumes [a.(i) < Array.length a] for all [i] in [a].
+   *)
+let reverse_mapping a =
+    let result = Array.make (Array.length a) 0 in
+    Array.iteri (fun i -> fun x ->
+        result.((mask_to_int x) - 1) <- i;
+    ) a;
+    result
+;;
+
+
+let print_mapping mapping =
+    let num_bits = 7 in
+    Array.iteri (fun i -> fun m' ->
+        let m = 1 lsl (num_bits - i - 1) in
+        Printf.printf "%x x> %x\n" m m';
+        Printf.printf "%c -> %c\n" (mask_to_char m) (mask_to_char m')
+    ) mapping;
+;;
+
+
+(*
+Take a numerical combination of signals (an integer that is <= 0x7f) and turn it into a decoded set
+of signals.
+*)
+let decode_signals lookup signals =
+    (*
+    For each bit at position i in signals, set the bit at position lookup.(i) in the output.
+    *)
+    let num_bits = 7 in
+    let rec loop i decoded =
+        if i = num_bits then decoded
+        else
+            let i_mask = 1 lsl (num_bits - i - 1) in
+            (* let i_mask = 1 lsl i in *)
+            let decoded' = 
+                if signals land i_mask = i_mask then decoded lor (1 lsl (num_bits - lookup.(i) - 1))
+                (* if signals land i_mask = i_mask then decoded lor (1 lsl lookup.(i)) *)
+                else decoded
+            in
+            loop (succ i) decoded'
+    in
+    loop 0 0
+;;
+
 
 let do_game entries =
     Array.fold_left (fun acc -> fun entry ->
-        let _, output = entry in
-        let unique_segments = count_unique_segments output in
-        (* let unique_segments = find_unique_segments input in
-        (* Now, find the outputs where all the letters are associated in unique_segments *)
-        let decodable_outputs =
-            Array.fold_left (fun acc -> fun out ->
-                (* TODO: If this is too slow, consider searching the array for each unique_segment
-                 * instead of the other way around *)
-                if string_for_all (fun c -> List.mem_assoc c unique_segments) out then
-                    out :: acc
-                else
-                    acc
-            ) [] output
+        let input, output = entry in
+        (* let output_encoded = Array.map encode_string output in *)
+        (* Printf.printf "input=%s\n" (format_array_of_string input);
+        Printf.printf "output=%s\n" (format_array_of_string output); *)
+        let forward_lookup = resolve input in
+        let lookup = reverse_mapping forward_lookup in
+        (* let lookup_char = Array.map mask_to_char lookup in *)
+        (* For each display in output, turn it into an integer and look it up in lookup. OR the results
+        together, and decode them. Collect the digits in a list *)
+        (* Printf.printf "lookup=%s\n" (format_array lookup (Printf.sprintf "%x")); *)
+        (* print_mapping lookup; *)
+        let mixed_signals = Array.map encode_string output in
+        (* Printf.printf "mixed_signals=";
+        Array.iter (Printf.printf "%x ") mixed_signals;
+        Printf.printf "\n"; *)
+        let unmixed_signals = Array.map (decode_signals lookup) mixed_signals in
+        (* Printf.printf "unmixed_signals=";
+        Array.iter (Printf.printf "%x ") unmixed_signals;
+        Printf.printf "\n"; *)
+        let decoded_digits = Array.map (fun x -> decode_int x) unmixed_signals in
+        let rec digits_to_num digits i =
+            let n = Array.length digits in
+            if i = n then
+                0
+            else
+                let digit = digits.(n - i - 1) * (pow 10 i) in
+                digit + digits_to_num digits (succ i)
         in
-        acc + (List.length decodable_outputs) *)
-        acc + unique_segments
+        let num = digits_to_num decoded_digits 0 in
+        num + acc
     ) 0 entries
 ;;
 
@@ -323,20 +424,28 @@ let do_game entries =
 let process_file filename =
     let inc = open_in filename in
     let entries = load_file inc in
-    let input, _ = entries.(0) in
-    Printf.printf "input=%s\n" (format_array_of_string input);
-    let result = resolve input in
-    let num_bits = 7 in
-    Array.iteri (fun i -> fun m' ->
-        let m = 1 lsl (num_bits - i - 1) in
-        Printf.printf "%c -> %c\n" (mask_to_char m) (mask_to_char m')
-    ) result;
+    let sum = do_game entries in
+    Printf.printf "filename=%s\n" filename;
+    Printf.printf "result=%d\n" sum;
 
     Printf.printf "\n";
 ;;
 
+(*
+a -> d
+b -> g
+c -> b
+d -> c
+e -> a
+f -> e
+g -> f
+
+cdfeb -> bceag => abceg
+cdfeg -> dagfb => abdfg (this one is right--the mapping is reversed)
+   *)
+
 
 let () =
     process_file "8-test.input";
-    (* process_file "8.input"; *)
+    process_file "8.input";
 ;;

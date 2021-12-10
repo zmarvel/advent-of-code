@@ -114,7 +114,7 @@ let do_game lines width height =
     in
     let final_board = line_loop lines in
     Printf.printf "final_board=\n%s\n" (format_matrix_of_int final_board);
-    let mask = matrix_greater_than 1 final_board in
+    let mask = matrix_greater_than final_board 1 in
     (* let masked_board = matrix_multiply final_board mask in *)
     let sum = matrix_sum mask in
     sum

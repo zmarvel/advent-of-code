@@ -109,15 +109,28 @@ let multiply_array a1 a2 =
 ;;
 
 
-(** Slide all elements in a to the left one slot (creates a new array).
+(** Slide all elements in a to the by left [num_slots] slots (creates a new array). Elements that
+ * don't get replaced are filled with [fill].
     *)
-let array_slide_left a =
+let array_slide_left num_slots fill a =
     let n = Array.length a in
-    Array.mapi (fun i -> fun x ->
-        if i < n - 1 then
-            a.(i + 1)
+    Array.mapi (fun i -> fun _ ->
+        if i < n - num_slots then
+            a.(i + num_slots)
         else
-            x
+            fill
+    ) a
+;;
+
+(** Slide all elements in a to the by right [num_slots] slots (creates a new array). Elements that
+ * don't get replaced are filled with [fill].
+    *)
+let array_slide_right num_slots fill a =
+    Array.mapi (fun i -> fun _ ->
+        if i >= num_slots then
+            a.(i - num_slots)
+        else
+            fill
     ) a
 ;;
 
@@ -145,6 +158,63 @@ let array_sub_scalar a x =
    *)
 let array_sum a =
     Array.fold_left (+) 0 a
+;;
+
+
+let reverse_array a =
+    let len = Array.length a in
+    Array.init len (function i -> a.(len - i - 1))
+;;
+
+
+(* Produces an array representing a mask [m], where [m[i]] is 1 when [a[i] > threshold].
+ *)
+let array_greater_than threshold a =
+    Array.map (fun x -> if x > threshold then 1 else 0) a
+;;
+
+
+let array_less_than threshold a =
+    Array.map (fun x -> if x < threshold then 1 else 0) a
+;;
+
+
+let array_equal value a =
+    Array.map (fun x -> if x = value then 1 else 0) a
+;;
+
+
+(* Produces an array representing a mask [m], where [m[i]] is 1 when [a1[i] > a2[i]].
+ *)
+let array_greater_than2 a1 a2 =
+    Array.map2 (fun x -> fun y -> if x > y then 1 else 0) a1 a2
+;;
+
+
+let array_less_than2 a1 a2 =
+    Array.map2 (fun x -> fun y -> if x < y then 1 else 0) a1 a2
+;;
+
+
+let array_equal2 a1 a2 =
+    Array.map2 (fun x -> fun y -> if x = y then 1 else 0) a1 a2
+;;
+
+
+(** Produces array [a'], where [a'.(i) = if mask(i) > 0 then a.(i) else 0].
+ *)
+let array_mask a mask =
+    Array.map2 (fun x -> fun m ->
+        if m > 0 then x
+        else 0
+    ) a mask
+;;
+
+
+(* Values greater than 0 are set to 1 and everything else is set to 0.
+   *)
+let array_to_binary =
+    array_greater_than 0
 ;;
 
 
@@ -181,6 +251,12 @@ let array_find_opt (pred : 'a -> bool) (a : 'a array) : 'a option =
 
 let array_find pred a =
     Option.get (array_find_opt pred a)
+;;
+
+
+(** Convert string to char array *)
+let array_of_string s =
+        Array.init (String.length s) (String.get s)
 ;;
 
 
@@ -227,6 +303,8 @@ let matrix_transpose m =
 
 (**
  * Returns a new matrix resulting from applying [f] to each element of [m1] and [m2].
+ *
+ * TODO: Consider changing argument order for consistency with Array.map2 (function arg first)
  *)
 let matrix_map2 m1 m2 f =
     let dim1, dim2 = get_matrix_dims m1 in
@@ -244,6 +322,17 @@ let matrix_add m1 m2 =
 ;;
 
 
+(** Apply [f] to all cells of [m], returning the result in a new matrix. *)
+let matrix_map m f =
+    Array.map (fun row -> Array.map f row) m
+;;
+
+
+(* TODO: rename matrix_add to matrix_add2, I guess *)
+let matrix_add_scalar m x =
+    matrix_map m (fun y -> x + y)
+;;
+
 
 let matrix_sum m =
     Array.fold_left (fun acc -> fun row ->
@@ -251,9 +340,93 @@ let matrix_sum m =
 ;;
 
 
-(** Apply [f] to all cells of [m], returning the result in a new matrix. *)
-let matrix_map m f =
-    Array.map (fun row -> Array.map f row) m
+(** Produces a mask of values in [m] equal to [value], where [m.(i) = 1] iff [m.(i) > value]
+ * (otherwise 0).
+ *)
+let matrix_greater_than m threshold =
+    Array.map (array_greater_than threshold) m
+;;
+
+
+(** Produces a mask of values in [m] equal to [value], where [m.(i) = 1] iff [m.(i) < value]
+ * (otherwise 0).
+ *)
+let matrix_less_than m threshold =
+    Array.map (array_less_than threshold) m
+;;
+
+
+(** Produces a mask of values in [m] equal to [value], where [m.(i) = 1] iff [m.(i) = value]
+ * (otherwise 0).
+ *)
+let matrix_equal m value =
+    Array.map (array_equal value) m
+;;
+
+
+(** Produces a matrix where cell [i] is 1 if [m1.(i) > m2.(i)], and otherwise 0.
+ *)
+let matrix_greater_than2 m1 m2 =
+    Array.map2 array_greater_than2 m1 m2
+;;
+
+(** Produces a matrix where cell [i] is 1 if [m1.(i) < m2.(i)], and otherwise 0.
+ *)
+let matrix_less_than2 m1 m2 =
+    Array.map2 array_less_than2 m1 m2
+;;
+
+(** Produces a matrix where cell [i] is 1 if [m1.(i) = m2.(i)], and otherwise 0.
+ *)
+let matrix_equal2 m1 m2 =
+    Array.map2 array_equal2 m1 m2
+;;
+
+
+let matrix_mask m mask =
+    matrix_map2 m mask (fun x -> fun m ->
+        if m > 0 then x
+        else 0
+    )
+;;
+
+
+(** For every row in [m], move the elements left by [num_cols]. For elements on the right end of
+ * the row that don't get replaced, fill them with [fill].
+ *)
+let matrix_slide_left num_cols fill m =
+    Array.map (array_slide_left num_cols fill) m
+;;
+
+
+(** For every row in [m], move the elements left by [num_cols]. For elements on the right end of
+ * the row that don't get replaced, fill them with [fill].
+ *)
+let matrix_slide_right num_cols fill m =
+    Array.map (array_slide_right num_cols fill) m
+;;
+
+
+let matrix_slide_up num_rows fill m =
+    let n = Array.length m in
+    let ncols = Array.length m.(0) in
+    Array.mapi (fun i -> fun _ ->
+        if i < n - num_rows then
+            Array.copy m.(i + num_rows)
+        else
+            Array.make ncols fill
+    ) m
+;;
+
+
+let matrix_slide_down num_rows fill m =
+    let ncols = Array.length m.(0) in
+    Array.mapi (fun i -> fun _ ->
+        if i >= num_rows then
+            Array.copy m.(i - num_rows)
+        else
+            Array.make ncols fill
+    ) m
 ;;
 
 
@@ -282,7 +455,12 @@ let format_array_of_int a =
 
 
 let format_array_of_string a =
-    format_array a (fun s -> s)
+    format_array a
+;;
+
+
+let format_array_of_char a =
+        format_array a (String.make 1)
 ;;
 
 
@@ -295,31 +473,6 @@ let format_matrix_of_int m =
         Buffer.add_string b "\n") m;
     Buffer.add_string b "|]";
     Buffer.contents b
-;;
-
-
-let reverse_array a =
-    let len = Array.length a in
-    Array.init len (function i -> a.(len - i - 1))
-;;
-
-
-(* Produces an array representing a mask [m], where [m[i]] is 1 when [a[i] > threshold].
- *)
-let array_greater_than threshold a =
-    Array.map (fun x -> if x > threshold then 1 else 0) a
-;;
-
-
-let matrix_greater_than threshold m =
-    Array.map (array_greater_than threshold) m
-;;
-
-
-(* Values greater than 0 are set to 1 and everything else is set to 0.
-   *)
-let array_to_binary =
-    array_greater_than 0
 ;;
 
 

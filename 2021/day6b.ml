@@ -35,7 +35,7 @@ let do_game ages days =
             ages
         else
             let num_new = ages.(0) in
-            let ages' = array_slide_left ages in
+            let ages' = array_slide_left 1 0 ages in
             ages'.(6) <- ages'.(6) + num_new;
             ages'.(8) <- num_new;
             (* Printf.printf "ages=%s ages'=%s num_new=%d\n" (format_array_of_int ages) (format_array_of_int ages') num_new; *)

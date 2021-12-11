@@ -321,6 +321,11 @@ let matrix_add m1 m2 =
     matrix_map2 m1 m2 (+)
 ;;
 
+(** Element-wise matrix subtraction *)
+let matrix_sub m1 m2 =
+    matrix_map2 m1 m2 (-)
+;;
+
 
 (** Apply [f] to all cells of [m], returning the result in a new matrix. *)
 let matrix_map m f =

@@ -283,8 +283,8 @@ let string_for_all (pred : char -> bool) (s : string): bool =
 ;;
 
 
-let init_matrix dim1 dim2 f =
-    Array.init dim1 (function i -> Array.init dim2 (function j -> f i j))
+let init_matrix dim1 dim2 (f : int -> int -> int) =
+    Array.init dim1 (function i -> Array.init dim2 (f i))
 ;;
 
 
@@ -301,14 +301,24 @@ let matrix_transpose m =
 ;;
 
 
+(* exception Invalid_dims of (int * int) *)
+exception Invalid_dims2 of ((int * int) * (int * int))
+
+
 (**
  * Returns a new matrix resulting from applying [f] to each element of [m1] and [m2].
  *
  * TODO: Consider changing argument order for consistency with Array.map2 (function arg first)
  *)
 let matrix_map2 m1 m2 f =
-    let dim1, dim2 = get_matrix_dims m1 in
-    init_matrix dim1 dim2 (fun i -> fun j -> f m1.(i).(j) m2.(i).(j))
+    let dims1 = get_matrix_dims m1 in
+    let dims2 = get_matrix_dims m2 in
+    if dims1 = dims2 then
+        let dim1, dim2 = get_matrix_dims m1 in
+        init_matrix dim1 dim2 (fun i -> fun j ->
+            (* Printf.printf "i=%d j=%d row1=%d row2=%d\n" i j (Array.length m1.(i)) (Array.length m2.(i)) ; *)
+            f m1.(i).(j) m2.(i).(j))
+    else raise (Invalid_dims2 (dims1, dims2))
 ;;
 
 (** Element-wise matrix multiplication *)
@@ -413,6 +423,34 @@ let matrix_mask m mask =
         if m > 0 then x
         else 0
     )
+;;
+
+
+let matrix_not m =
+    matrix_equal m 0
+;;
+
+
+(** "Logical OR" of two int matrices representing a mask. In other words, the output [m.(i).(j) = 1]
+    iff [m1.(i).(j) = 1 || m2.(i).(j) = 1], otherwise 0.
+   *)
+let matrix_lor2 m1 m2 =
+    matrix_map2 m1 m2 (fun x -> fun y -> if x = 1 || y = 1 then 1 else 0)
+;;
+
+
+(** Logical xor.
+   *)
+let xor (x : bool) (y : bool) : bool =
+    (x && not y) || (not x && y)
+;;
+
+
+(** "Logical XOR" of two int matrices representing a mask. In other words, the output [m.(i).(j) = 1]
+    iff [m1.(i).(j) = 1 lxor m2.(i).(j) = 1], otherwise 0.
+   *)
+let matrix_lxor2 m1 m2 =
+    matrix_map2 m1 m2 (fun x -> fun y -> if xor (x = 1) (y = 1) then 1 else 0)
 ;;
 
 

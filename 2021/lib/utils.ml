@@ -333,6 +333,26 @@ let matrix_map m f =
 ;;
 
 
+let matrix_fold_left f init m =
+    Array.fold_left (fun acc -> fun row ->
+        Array.fold_left f acc row) init m
+;;
+
+
+let matrix_where pred m =
+    let num_rows = Array.length m in
+    let num_cols = Array.length m.(0) in
+    let rec helper i j ls =
+        if i = num_rows then ls
+        else if j = num_cols then helper (succ i) 0 ls
+        else
+            let ls' = if pred m.(i).(j) then ((i, j) ::  ls) else ls in
+            helper i (succ j) ls'
+    in
+    helper 0 0 []
+;;
+
+
 (* TODO: rename matrix_add to matrix_add2, I guess *)
 let matrix_add_scalar m x =
     matrix_map m (fun y -> x + y)
@@ -445,6 +465,32 @@ let print_matrix m =
 ;;
 
 
+let format_pair_of_int (p : int * int) =
+    let x, y = p in
+    Printf.sprintf "(%d, %d)" x y
+;;
+
+
+let format_list ls fmt =
+    let b = Buffer.create 16 in
+    Buffer.add_string b "[ ";
+    List.iter (fun n -> Buffer.add_string b (fmt n); Buffer.add_string b " ";) ls;
+    Buffer.add_string b "]";
+    Buffer.contents b
+;;
+
+
+(** Format a list of integers as a string. Does not include a final newline. *)
+let format_list_of_int ls =
+    format_list ls (Printf.sprintf "%d")
+;;
+
+
+let format_list_of_string ls =
+    format_list ls (fun s -> s)
+;;
+
+
 let format_array a fmt =
     let b = Buffer.create 16 in
     Buffer.add_string b "[| ";
@@ -501,27 +547,3 @@ let partition_point a start stop pred =
     loop start
 ;;
 
-
-let format_list_of_string ls =
-    let b = Buffer.create 64 in 
-    Buffer.add_string b "[ ";
-    let rec loop ls =
-        match ls with
-        | s :: rst ->
-            begin
-                Buffer.add_string b s;
-                Buffer.add_string b " ";
-                loop rst
-            end
-        | [] -> ()
-    in
-    loop ls;
-    Buffer.add_string b "]";
-    Buffer.contents b
-;;
-
-
-(** Format a list of integers as a string. Does not include a final newline. *)
-let format_list_of_int ls =
-    format_list_of_string (List.map string_of_int ls)
-;;

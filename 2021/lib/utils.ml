@@ -586,6 +586,13 @@ let format_matrix_of_int m =
 ;;
 
 
+let rec list_contains pred ls =
+    match ls with
+    | hd :: rst -> pred hd || list_contains pred rst
+    | _ -> false
+;;
+
+
 (**
  * Assuming [a] is a sorted array, find the first element [x] between indices [start] and [stop]
  * where [pred x] is true, and return its index.
@@ -605,4 +612,3 @@ let partition_point a start stop pred =
     in
     loop start
 ;;
-

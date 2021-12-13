@@ -1,6 +1,6 @@
 
 
-type point = {
+type t = {
     x: int;
     y: int;
 }
@@ -22,10 +22,8 @@ let add p1 p2 =
 let compare p1 p2 =
     if p1.x = p2.x && p1.y = p2.y then
         0
-    else if p1.x > p2.x && p1.y > p2.y then
-        1
-    else
-        -1
+    else if p1.x = p2.x then compare p1.y p2.y
+    else compare p1.x p2.x
 ;;
 
 

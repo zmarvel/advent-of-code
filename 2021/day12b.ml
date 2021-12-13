@@ -182,6 +182,11 @@ let list_find_duplicate_opt ls =
 (** Find all valid paths from [start] to [stop]
    *)
 let find_paths connected (nodes : string array) start stop : int list list =
+    Printf.printf "nodes=[|\n";
+    Array.iteri (fun i -> fun node ->
+        Printf.printf "\t%d: %s;\n" i node
+    ) nodes;
+    Printf.printf "|]\n";
     let num_nodes = Array.length nodes in
     let small_node_mask = Array.map is_small_node nodes in
     (* Returns a list of paths from curr to stop. *)
@@ -198,18 +203,26 @@ let find_paths connected (nodes : string array) start stop : int list list =
                 else
                     let new_paths =
                         if j = start then (
-                            Printf.printf "curr=%s\tj=%s (j=start)\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); [])
+                            (* Printf.printf "curr=%s\tj=%s (j=start)\tpath=%s\n" nodes.(curr)
+                        * nodes.(j) (format_path nodes path); *) [])
                         else if curr_connected.(j) = 0 then (
-                            Printf.printf "curr=%s\tj=%s (not connected)\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); [])
+                            (* Printf.printf "curr=%s\tj=%s (not connected)\tpath=%s\n" nodes.(curr)
+                        * nodes.(j) (format_path nodes path); *) [])
                         else if small_node_mask.(j) && (
-                            let small_in_path = List.filter (Array.get small_node_mask) path in
+                            (* If the node is small, we can visit it twice if no other small node
+                             * has been visited twice already *)
+                            let small_in_path = List.filter (fun i -> small_node_mask.(i)) path in
                             let duplicate_opt = list_find_duplicate_opt small_in_path in
                             match duplicate_opt with
-                            (* If duplicate = j, then adding this small cave again would lead to us visiting it tree times. *)
-                            | Some (duplicate) -> duplicate = j
+                            (* If duplicate = j, then adding this small cave again would lead to us
+                             * visiting it three times. *)
+                            | Some (duplicate) -> (duplicate = j || list_contains (fun i -> i = j)
+                            small_in_path)
                             | None -> false) then (
-                                Printf.printf "curr=%s\tj=%s (small duplicate)\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); [])
-                        else (Printf.printf "curr=%s\tj=%s (ok)\t\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); helper [] (j :: path) j curr)
+                                (* Printf.printf "curr=%s\tj=%s (small duplicate)\tpath=%s\n"
+                                 * nodes.(curr) nodes.(j) (format_path nodes path); *) [])
+                        else ( (* Printf.printf "curr=%s\tj=%s (ok)\t\tpath=%s\n" nodes.(curr)
+                        nodes.(j) (format_path nodes path); *) helper [] (j :: path) j curr)
                     in
                     (* Printf.printf "paths=%s\nnew_paths=%s\n\n" (format_paths nodes paths)
                        (format_paths nodes new_paths); *)
@@ -233,6 +246,11 @@ let do_game edges =
     let stop_pos = array_find_pos (fun x -> x = "end") nodes in
     let paths = find_paths connected nodes start_pos stop_pos in
     let paths = List.rev (List.map List.rev paths) in
+    (* Printf.printf "paths=[\n";
+    List.iter (fun path -> Printf.printf "%s\n" (format_path nodes path)) paths;
+    Printf.printf "]\n"; *)
+
+    (*
     let sorted_paths = List.sort (fun l1 -> fun l2 ->
         let len_l1 = List.length l1 in
         let len_l2 = List.length l2 in
@@ -244,11 +262,9 @@ let do_game edges =
         else compare len_l1 len_l2
         ) paths in
     Printf.printf "paths=[\n";
-    List.iter (fun path -> Printf.printf "%s\n" (format_path nodes path)) paths;
-    Printf.printf "]\n";
-    Printf.printf "paths=[\n";
     List.iter (fun path -> Printf.printf "%s\n" (format_path nodes path)) sorted_paths;
     Printf.printf "]\n";
+    *)
 
     List.length paths
 ;;
@@ -266,8 +282,10 @@ let process_file filename =
 ;;
 
 let () =
+    (*
     process_file "12-test1.input";
-    (* process_file "12-test2.input"; *)
-    (* process_file "12-test3.input"; *)
-    (* process_file "12.input"; *)
+    process_file "12-test2.input";
+    process_file "12-test3.input";
+    *)
+    process_file "12.input";
 ;;

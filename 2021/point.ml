@@ -77,3 +77,27 @@ let points_in_line p1 p2 =
 let fmt p =
     Printf.sprintf "{x = %d; y = %d}" p.x p.y
 ;;
+
+
+(** "Draw" all the points in a matrix.
+ *)
+let fill_matrix points =
+    let xmax, ymax =
+        List.fold_left (fun acc -> fun point ->
+            let xmax, ymax = acc in
+            let xmax' = if point.x > xmax then point.x else xmax in
+            let ymax' = if point.y > ymax then point.y else ymax in
+            (xmax', ymax')
+        ) (0, 0) points
+    in
+    let m = Array.make_matrix (xmax + 1) (ymax + 1) 0 in
+    let rec helper points =
+        match points with
+        | [] -> m
+        | hd :: rst ->
+                m.(hd.x).(hd.y) <- 1;
+                helper rst
+    in
+    (* x <-> col, y <-> row *)
+    Utils.matrix_transpose (helper points)
+;;

@@ -319,7 +319,7 @@ let load_file inc =
     in
     helper []
         |> Array.of_list
-        |> reverse_array
+        |> array_reverse
 ;;
 
 

@@ -73,7 +73,7 @@ let load_file inc =
                 helper ((input, output) :: entries)
         | None -> entries
     in
-    reverse_array (Array.of_list (helper []))
+    array_reverse (Array.of_list (helper []))
 ;;
 
 

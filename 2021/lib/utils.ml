@@ -259,32 +259,25 @@ let array_find pred a =
 ;;
 
 
+let array_find_pos_opt pred a =
+    let n = Array.length a in
+    let rec loop i =
+        if i = n then None
+        else if pred a.(i) then Some(i)
+        else loop (succ i)
+    in
+    loop 0
+;;
+
+
+let array_find_pos pred a =
+    Option.get (array_find_pos_opt pred a)
+;;
+
+
 (** Convert string to char array *)
 let array_of_string s =
         Array.init (String.length s) (String.get s)
-;;
-
-
-let string_fold_left (f : 'a -> char -> 'a) (init : 'a) (s : string) : 'a =
-    let n = String.length s in
-    let rec loop i acc =
-        if i = n then acc
-        else loop (succ i) (f acc s.[i])
-    in
-    loop 0 init
-;;
-
-
-(** Introduced in OCaml 4.13.0 *)
-let string_for_all (pred : char -> bool) (s : string): bool =
-    let n = String.length s in
-    let rec helper i =
-        if i = n then
-            true
-        else
-            (pred s.[i]) && (helper (succ i))
-    in
-    helper 0
 ;;
 
 
@@ -495,6 +488,39 @@ let matrix_slide_down num_rows fill m =
         else
             Array.make ncols fill
     ) m
+;;
+
+
+let is_lowercase_ascii (c : char) =
+    c >= 'a' && c <= 'z'
+;;
+
+
+let is_uppercase_ascii (c : char ) =
+    c >= 'A' && c <= 'Z'
+;;
+
+
+let string_fold_left (f : 'a -> char -> 'a) (init : 'a) (s : string) : 'a =
+    let n = String.length s in
+    let rec loop i acc =
+        if i = n then acc
+        else loop (succ i) (f acc s.[i])
+    in
+    loop 0 init
+;;
+
+
+(** Introduced in OCaml 4.13.0 *)
+let string_for_all (pred : char -> bool) (s : string): bool =
+    let n = String.length s in
+    let rec helper i =
+        if i = n then
+            true
+        else
+            (pred s.[i]) && (helper (succ i))
+    in
+    helper 0
 ;;
 
 

@@ -1,5 +1,5 @@
 #!/bin/sh
 
-set -u -e -o pipefail
+set -u -e
 
-docker run --mount type=bind,source=$(pwd),target=/advent-of-code -it advent-of-code:2021
+docker run --rm --mount type=bind,source=$(pwd),target=/advent-of-code -it advent-of-code:2021

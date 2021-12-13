@@ -28,7 +28,7 @@ let load_file inc =
     in
     let rec read_board i board =
         if i = 5 then
-            reverse_array (Array.of_list board)
+            array_reverse (Array.of_list board)
         else
             let line =
                 input_line inc

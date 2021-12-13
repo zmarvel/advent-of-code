@@ -136,27 +136,26 @@ let test_matrix_multiply _ =
 ;;
 
 
-(**
- * Return true when [mask] contains either a row or a column of all 0.
- * When a cell is 0, it has been "covered."
- *)
-let is_winning_mask (mask : int array array) =
-    let sum_rows m =
-        Array.map (fun row -> array_sum row) m
-    in
-    let exists_zero a =
-        Array.mem 0 a
-    in
-    (* Add each row. If any of the results are 0, the board is winning. *)
-    let row_result = sum_rows mask in
-    (exists_zero row_result) || (
-        (* Do the same for columns *)
-        let mask_t = matrix_transpose mask in
-        let col_result = sum_rows mask_t in
-        exists_zero col_result
-    )
+let test_is_lowercase_ascii _ =
+    assert_equal (is_lowercase_ascii '9') false;
+    assert_equal (is_lowercase_ascii '!') false;
+    assert_equal (is_lowercase_ascii 'A') false;
+    assert_equal (is_lowercase_ascii 'Z') false;
+    assert_equal (is_lowercase_ascii 'a') true;
+    assert_equal (is_lowercase_ascii 'b') true;
+    assert_equal (is_lowercase_ascii 'z') true;
 ;;
 
+
+let test_is_uppercase_ascii _ =
+    assert_equal (is_uppercase_ascii '9') false;
+    assert_equal (is_uppercase_ascii '!') false;
+    assert_equal (is_uppercase_ascii 'a') false;
+    assert_equal (is_uppercase_ascii 'z') false;
+    assert_equal (is_uppercase_ascii 'A') true;
+    assert_equal (is_uppercase_ascii 'B') true;
+    assert_equal (is_uppercase_ascii 'Z') true;
+;;
 
 
 let suite = "Test AOC Utils" >::: [
@@ -176,6 +175,9 @@ let suite = "Test AOC Utils" >::: [
 
     "test_matrix_multiply" >:: test_matrix_multiply ;
     "test_matrix_transpose" >:: test_matrix_transpose ;
+
+    "test_is_lowercase_ascii" >:: test_is_lowercase_ascii ;
+    "test_is_uppercase_ascii" >:: test_is_uppercase_ascii ;
 ];;
 
 let () =

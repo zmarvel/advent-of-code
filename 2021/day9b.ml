@@ -58,7 +58,7 @@ let load_file inc =
                 helper (row :: rows)
         | None -> rows
     in
-    reverse_array (Array.of_list (helper []))
+    array_reverse (Array.of_list (helper []))
 ;;
 
 
@@ -142,9 +142,7 @@ let do_game grid =
 let process_file filename =
     let inc = open_in filename in
     let grid = load_file inc in
-    Printf.printf "input=";
-    print_matrix grid;
-    Printf.printf"\n";
+    Printf.printf "input=%s\n" (format_matrix_of_int grid);
     let result = do_game grid in
     Printf.printf "filename=%s\n" filename;
     Printf.printf "result=%d\n" result;

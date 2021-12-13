@@ -70,7 +70,7 @@ let load_file inc =
                 helper (line :: lines)
         | None -> lines
     in
-    reverse_array (Array.of_list (helper []))
+    array_reverse (Array.of_list (helper []))
 ;;
 
 

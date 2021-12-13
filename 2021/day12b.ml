@@ -183,9 +183,10 @@ let list_find_duplicate_opt ls =
    *)
 let find_paths connected (nodes : string array) start stop : int list list =
     let num_nodes = Array.length nodes in
+    let small_node_mask = Array.map is_small_node nodes in
     (* Returns a list of paths from curr to stop. *)
     let rec helper paths path curr _prev =
-        if curr = stop then ((curr :: path) :: paths)
+        if curr = stop then (path :: paths)
         else
             (* For each connected node, call the function recursively. Connected nodes are
                disqualified if they are small caves that have already been seen (this prevents us
@@ -196,18 +197,19 @@ let find_paths connected (nodes : string array) start stop : int list list =
                 if j = num_nodes then paths
                 else
                     let new_paths =
-                        if j = start then []
-                        else if is_small_node nodes.(j) && (
-                            let small_in_path = List.filter (fun i -> is_small_node nodes.(i)) path in
+                        if j = start then (
+                            Printf.printf "curr=%s\tj=%s (j=start)\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); [])
+                        else if curr_connected.(j) = 0 then (
+                            Printf.printf "curr=%s\tj=%s (not connected)\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); [])
+                        else if small_node_mask.(j) && (
+                            let small_in_path = List.filter (Array.get small_node_mask) path in
                             let duplicate_opt = list_find_duplicate_opt small_in_path in
                             match duplicate_opt with
-                            | Some (duplicate) -> duplicate = j (* If duplicate = j, then adding this small cave again would lead to us visiting it twice. *)
-                            | None -> false
-                                (* match duplicate_opt with
-                                | Some(duplicate) -> duplicate = j
-                                | None -> false *)) then []
-                        else if curr_connected.(j) = 0 then []
-                        else helper [] (curr :: path) j curr
+                            (* If duplicate = j, then adding this small cave again would lead to us visiting it tree times. *)
+                            | Some (duplicate) -> duplicate = j
+                            | None -> false) then (
+                                Printf.printf "curr=%s\tj=%s (small duplicate)\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); [])
+                        else (Printf.printf "curr=%s\tj=%s (ok)\t\tpath=%s\n" nodes.(curr) nodes.(j) (format_path nodes path); helper [] (j :: path) j curr)
                     in
                     (* Printf.printf "paths=%s\nnew_paths=%s\n\n" (format_paths nodes paths)
                        (format_paths nodes new_paths); *)

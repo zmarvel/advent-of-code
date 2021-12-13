@@ -4,13 +4,57 @@ open OUnit2;;
 open Utils;;
 
 
-let test_multiply_array _ =
+let test_ctoi _ =
+    assert_equal (ctoi '0') 0;
+    assert_equal (ctoi '9') 9;
+    assert_raises (Invalid_digit 'a') (fun _ ->
+        ctoi 'a');
+;;
+
+
+let test_array_add _ =
+    let a1 = Array.init 10 (fun i -> 2 * i + 1) in
+    let a2 = Array.init 10 (fun i -> 2 * i) in
+    let result = array_add a1 a2 in
+    assert_equal (array_ifor_all (fun i -> fun x -> x = 4 * i + 1) result) true;
+;;
+
+
+let test_array_sub _ =
+    let a1 = Array.init 10 (fun i -> 2 * i + 1) in
+    let a2 = Array.init 10 (fun i -> 2 * i) in
+    let result = array_sub a1 a2 in
+    assert_equal (array_ifor_all (fun _ -> fun x -> x = 1) result) true;
+;;
+
+
+let test_array_multiply _ =
     let a1 = Array.make 6 0 in
     let a2 = Array.make 6 1 in
-    let result = multiply_array a1 a2 in
+    let result = array_multiply a1 a2 in
     assert_equal (Array.length result) 6;
     assert_equal result a1;
-    assert_equal (multiply_array a1 a2) (multiply_array a2 a1);
+    assert_equal (array_multiply a1 a2) (array_multiply a2 a1);
+;;
+
+
+let test_array_slide_left _ =
+    let a = Array.init 10 (fun i -> i) in
+    let a' = array_slide_left 2 (-1) a in
+    assert_equal (Array.length a) (Array.length a');
+    assert_equal a'.(8) (-1);
+    assert_equal a'.(9) (-1);
+    assert_equal (Array.sub a' 0 8) (Array.sub a 2 8);
+;;
+
+
+let test_array_slide_right _ =
+    let a = Array.init 10 (fun i -> i) in
+    let a' = array_slide_right 2 (-1) a in
+    assert_equal (Array.length a) (Array.length a');
+    assert_equal a'.(0) (-1);
+    assert_equal a'.(1) (-1);
+    assert_equal (Array.sub a' 2 8) (Array.sub a 0 8);
 ;;
 
 
@@ -41,6 +85,23 @@ let test_array_sum _ =
     let a = Array.make 6 0 in
     let a = Array.mapi (fun i -> fun _ -> i) a in
     assert_equal (array_sum a) (1 + 2 + 3 + 4 + 5);
+;;
+
+
+let test_array_iota _ =
+    assert_raises (Invalid_argument "array_iota") (fun _ ->
+        array_iota 5 4
+    );
+    assert_equal (array_iota 4 5) (Array.make 1 4);
+    assert_equal (array_iota (-4) 4) (array_sub (Array.init 8 (fun i -> i)) (Array.make 8 4));
+;;
+
+
+let test_array_reverse _ =
+    let a = array_iota 4 9 in
+    let a' = array_reverse a in
+    assert_equal a'.(0) a.(4);
+    assert_equal a'.(4) a.(0);
 ;;
 
 
@@ -99,11 +160,20 @@ let is_winning_mask (mask : int array array) =
 
 
 let suite = "Test AOC Utils" >::: [
-    "test_multiply_array" >:: test_multiply_array ;
+    "test_ctoi" >:: test_ctoi ;
+
+    "test_array_add" >:: test_array_add ;
+    "test_array_sub" >:: test_array_sub ;
+    "test_array_multiply" >:: test_array_multiply ;
+    "test_array_slide_left" >:: test_array_slide_left ;
+    "test_array_slide_right" >:: test_array_slide_right ;
     "test_array_abs" >:: test_array_abs ;
     "test_array_add_scalar" >:: test_array_add_scalar ;
     "test_array_sub_scalar" >:: test_array_sub_scalar ;
     "test_array_sum" >:: test_array_sum ;
+    "test_array_iota" >:: test_array_iota;
+    "test_array_reverse" >:: test_array_reverse ;
+
     "test_matrix_multiply" >:: test_matrix_multiply ;
     "test_matrix_transpose" >:: test_matrix_transpose ;
 ];;

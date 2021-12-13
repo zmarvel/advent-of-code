@@ -20,10 +20,17 @@ let rec pow a = function
 ;;
 
 
+exception Invalid_digit of char
+
+
 (** [ctoi '1'] will return [1].
  *)
 let ctoi c =
-    (int_of_char c) - (int_of_char '0')
+    let lower = int_of_char '0' in
+    let upper = int_of_char '9' in
+    let x = int_of_char c in
+    if x >= lower && x <= upper then x - lower
+    else raise (Invalid_digit c)
 ;;
 
 
@@ -37,17 +44,6 @@ let binary_string_to_int s =
             loop (i + 1) (n + (ctoi (String.get s i)) * (pow 2 ((String.length s) - i - 1)))
     in
     loop 0 0
-;;
-
-
-(** Print an array, with no trailing newline.
- *
- *  TODO: Just return a string
- *)
-let print_array a =
-    Printf.printf "[ ";
-    Array.iter (Printf.printf "%d ") a;
-    Printf.printf "]";
 ;;
 
 
@@ -78,33 +74,32 @@ let explode_int n num_bits =
     parts
 ;;
 
-(* Values equal to 0 are set to 1 and everything else is set to 0.
-   *)
-let invert_array a =
-    Array.map (fun x -> if x == 0 then 1 else 0) a
-;;
 
-
-(** Generalization of operation to create a new array by combining two other arrays.
- *)
-let zip_array a1 a2 f =
-    (* Just assume they're the same length *)
-    Array.init (Array.length a1) (function i ->
-        f a1.(i) a2.(i)
-    )
+let array_ifor_all (pred : int -> 'a -> bool) (a : 'a array) : bool =
+    let n = Array.length a in
+    let rec loop i =
+        if i = n then true
+        else (pred i a.(i)) && loop (succ i)
+    in
+    loop 0
 ;;
 
 
 (** Element-wise vector addition.
  *)
-let add_array a1 a2 =
+let array_add a1 a2 =
     Array.map2 (+) a1 a2
+;;
+
+
+let array_sub a1 a2 =
+    Array.map2 (-) a1 a2
 ;;
 
 
 (** Element-wise vector multiplication.
  *)
-let multiply_array a1 a2 =
+let array_multiply a1 a2 =
     Array.map2 ( * ) a1 a2
 ;;
 
@@ -161,7 +156,17 @@ let array_sum a =
 ;;
 
 
-let reverse_array a =
+(** Return an array counting from [start] (inclusive) to [stop] (exclusive).
+   *)
+let array_iota start stop =
+    if start < stop then
+        let n = stop - start in
+        Array.init n (fun i -> start + i)
+    else raise (Invalid_argument "array_iota")
+;;
+
+
+let array_reverse a =
     let len = Array.length a in
     Array.init len (function i -> a.(len - i - 1))
 ;;
@@ -493,16 +498,6 @@ let matrix_slide_down num_rows fill m =
 ;;
 
 
-let print_matrix m =
-    Printf.printf "[\n";
-    Array.iter (fun row ->
-        Printf.printf "  ";
-        print_array row;
-        Printf.printf "\n") m;
-    Printf.printf "]";
-;;
-
-
 let format_pair_of_int (p : int * int) =
     let x, y = p in
     Printf.sprintf "(%d, %d)" x y
@@ -544,7 +539,7 @@ let format_array_of_int a =
 
 
 let format_array_of_string a =
-    format_array a
+    format_array a (fun x -> x)
 ;;
 
 

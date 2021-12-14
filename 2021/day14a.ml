@@ -49,6 +49,27 @@ let format_replacement = function
 ;;
 
 
+let do_step template replacements =
+    let rec loop (chars : char list) chars' =
+        match chars with
+        | fst :: snd :: rst ->
+                (match array_find_opt (function
+                    | (a, b, _) -> a = fst && b = snd) replacements with
+                | Some(replacement) ->
+                        let _, _, c = replacement in
+                        Printf.printf "%s\n" (format_replacement replacement);
+                        loop (snd :: rst) (fst :: c :: snd :: chars)
+                | None ->
+                        loop (snd :: rst) (fst :: snd :: chars'))
+        | hd :: rst -> loop rst (hd :: chars')
+        | _ -> join_chars chars'
+    in
+    loop (explode_chars template) []
+;;
+
+
+
+
 let process_file filename =
     let inc = open_in filename in
     Printf.printf "filename=%s\n" filename;
@@ -56,6 +77,9 @@ let process_file filename =
 
     Printf.printf "template=%s\n" template;
     Printf.printf "replacements=%s\n" (format_array replacements format_replacement);
+
+    let first_replaced = do_step template replacements in
+    Printf.printf "first_replaced=%s\n" first_replaced;
 
     Printf.printf "\n";
 ;;

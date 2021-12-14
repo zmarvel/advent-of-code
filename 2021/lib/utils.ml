@@ -593,6 +593,26 @@ let rec list_contains pred ls =
 ;;
 
 
+let string_of_char = String.make 1;;
+
+
+(** Turn a list of chars into a string *)
+let join_chars ls =
+    let strings = List.map string_of_char ls in
+    String.concat "" strings
+;;
+
+
+(** Turn a string into a list of chars *)
+let explode_chars s =
+    let n = String.length s in
+    let rec loop i chars =
+        if i < 0 then chars
+        else loop (pred i) (s.[i] :: chars)
+    in
+    loop (n - 1) []
+;;
+
 (**
  * Assuming [a] is a sorted array, find the first element [x] between indices [start] and [stop]
  * where [pred x] is true, and return its index.

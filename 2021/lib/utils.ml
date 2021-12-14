@@ -501,6 +501,12 @@ let is_uppercase_ascii (c : char ) =
 ;;
 
 
+let string_reverse s =
+    let len = String.length s in
+    String.init len (function i -> s.[len - i - 1])
+;;
+
+
 let string_fold_left (f : 'a -> char -> 'a) (init : 'a) (s : string) : 'a =
     let n = String.length s in
     let rec loop i acc =

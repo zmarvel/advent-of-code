@@ -58,16 +58,44 @@ let do_step template replacements =
                 | Some(replacement) ->
                         let _, _, c = replacement in
                         Printf.printf "%s\n" (format_replacement replacement);
-                        loop (snd :: rst) (fst :: c :: snd :: chars)
+                        loop (snd :: rst) (c :: fst :: chars')
                 | None ->
-                        loop (snd :: rst) (fst :: snd :: chars'))
+                        loop (snd :: rst) (snd :: fst :: chars'))
         | hd :: rst -> loop rst (hd :: chars')
         | _ -> join_chars chars'
     in
-    loop (explode_chars template) []
+    string_reverse (loop (explode_chars template) [])
 ;;
 
 
+let count_chars s =
+    let counts = Hashtbl.create 32 in
+    String.iter (fun c ->
+        match Hashtbl.find_opt counts c with
+        | Some(count) -> Hashtbl.replace counts c (succ count)
+        | None -> Hashtbl.add counts c 1
+    ) s;
+    List.of_seq (Hashtbl.to_seq counts)
+;;
+
+
+let do_game template replacements =
+    let num_steps = 10 in
+    let rec loop i template =
+        if i = num_steps then template
+        else loop (succ i) (do_step template replacements)
+    in
+    let replaced = loop 0 template in
+    Printf.printf "replaced=%s\n" replaced;
+    let counts = Array.of_list (count_chars replaced) in
+    Array.sort (fun x -> fun y ->
+        let _, countx = x in
+        let _, county = y in
+        compare countx county
+    ) counts;
+    let num_counts = Array.length counts in
+    counts.(0), counts.(num_counts - 1)
+;;
 
 
 let process_file filename =
@@ -78,8 +106,11 @@ let process_file filename =
     Printf.printf "template=%s\n" template;
     Printf.printf "replacements=%s\n" (format_array replacements format_replacement);
 
-    let first_replaced = do_step template replacements in
-    Printf.printf "first_replaced=%s\n" first_replaced;
+    let min_count, max_count = do_game template replacements in
+    let minc, mincount = min_count in
+    let maxc, maxcount = max_count in
+    Printf.printf "mincount=%d (%c) maxcount=%d (%c)\n" mincount minc maxcount maxc;
+    Printf.printf "result=%d\n" (maxcount - mincount);
 
     Printf.printf "\n";
 ;;
@@ -87,7 +118,7 @@ let process_file filename =
 
 let () =
     process_file "14-test.input";
-    (*
     process_file "14.input";
+    (*
     *)
 ;;

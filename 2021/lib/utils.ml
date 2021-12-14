@@ -604,8 +604,8 @@ let string_of_char = String.make 1;;
 
 (** Turn a list of chars into a string *)
 let join_chars ls =
-    let strings = List.map string_of_char ls in
-    String.concat "" strings
+    let strings = List.rev_map string_of_char ls in
+    String.concat "" (List.rev strings)
 ;;
 
 

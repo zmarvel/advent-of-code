@@ -16,18 +16,20 @@ exception Invalid_input_file of string
 let load_file inc =
     let rec load_template template =
         match input_line_opt inc with
-        | Some(line) ->
+        | Some(line) -> (
+                Printf.printf "line=%s\n" line;
                 let line = String.trim line in
                 if String.length line > 0 then
                     load_template line
-                else template
+                else template)
         | None -> raise (Invalid_input_file "Expected replacements after template")
     in
     let template = load_template "" in
     (* Just load replacements into a list of 3-tuples *)
     let rec load_replacements replacements =
         match input_line_opt inc with
-        | Some (line) ->
+        | Some (line) -> (
+                Printf.printf "line=%s\n" line;
                 let replacement = line
                     |> String.trim
                     |> String.split_on_char ' '
@@ -36,7 +38,7 @@ let load_file inc =
                                     (pair.[0], pair.[1], between.[0])
                             | _ -> raise (Invalid_input_file "Unexpected replacement format"))
                 in
-                load_replacements (replacement :: replacements)
+                load_replacements (replacement :: replacements))
         | None -> replacements
     in
     let replacements = Array.of_list (load_replacements []) in
@@ -60,7 +62,7 @@ let do_step template replacements =
                         (* Printf.printf "%s\n" (format_replacement replacement); *)
                         loop (snd :: rst) (c :: fst :: chars')
                 | None ->
-                        loop (snd :: rst) (snd :: fst :: chars'))
+                        loop (snd :: rst) (fst :: chars'))
         | hd :: rst -> loop rst (hd :: chars')
         | _ -> join_chars chars'
     in
@@ -80,8 +82,9 @@ let count_chars s =
 
 
 let do_game template replacements =
-    let num_steps = 40 in
+    let num_steps = 25 in
     let rec loop i template =
+        Printf.printf "i=%d\n\n" i;
         if i = num_steps then template
         else loop (succ i) (do_step template replacements)
     in
@@ -111,6 +114,8 @@ let process_file filename =
     let maxc, maxcount = max_count in
     Printf.printf "mincount=%d (%c) maxcount=%d (%c)\n" mincount minc maxcount maxc;
     Printf.printf "result=%d\n" (maxcount - mincount);
+    (*
+    *)
 
     Printf.printf "\n";
 ;;
@@ -118,7 +123,7 @@ let process_file filename =
 
 let () =
     process_file "14-test.input";
-    process_file "14.input";
+    (* process_file "14.input"; *)
     (*
     *)
 ;;

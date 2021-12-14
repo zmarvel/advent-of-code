@@ -158,6 +158,27 @@ let test_is_uppercase_ascii _ =
 ;;
 
 
+let test_string_of_char _ =
+    assert_equal (string_of_char 'a') "a";
+;;
+
+
+let test_join_chars _ =
+    let result = join_chars [ 'a'; 'b' ] in
+    let expected = "ab" in
+    assert_equal result expected;
+    let num_chars = 400000 in
+    let chars =
+        let rec make_chars i chars =
+            if i = num_chars then chars
+            else make_chars (succ i) ((char_of_int (ctoi '0' + (i mod 10))) :: chars)
+        in
+        make_chars 0 []
+    in
+    assert_equal (String.length (join_chars chars)) num_chars;
+;;
+
+
 let suite = "Test AOC Utils" >::: [
     "test_ctoi" >:: test_ctoi ;
 
@@ -178,6 +199,8 @@ let suite = "Test AOC Utils" >::: [
 
     "test_is_lowercase_ascii" >:: test_is_lowercase_ascii ;
     "test_is_uppercase_ascii" >:: test_is_uppercase_ascii ;
+    "test_string_of_char" >:: test_string_of_char ;
+    "test_join_chars" >:: test_join_chars ;
 ];;
 
 let () =

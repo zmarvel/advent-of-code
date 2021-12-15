@@ -118,7 +118,7 @@ let process_file filename =
 
 let () =
     process_file "14-test.input";
-    process_file "14.input";
     (*
+    process_file "14.input";
     *)
 ;;

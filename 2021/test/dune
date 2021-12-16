@@ -1,3 +1,9 @@
 (test
     (name utils_test)
-    (libraries utils ounit2))
+    (libraries utils ounit2)
+    (modules utils_test))
+
+(test
+    (name binheap_test)
+    (libraries binheap ounit2)
+    (modules binheap_test))

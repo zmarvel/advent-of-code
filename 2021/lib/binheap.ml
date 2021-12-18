@@ -11,7 +11,7 @@ type 'a t = {
 
 and 'a node =
     Empty
-    | Node of (int * 'a) (* Node of (priority, value) -- should I use a record? *)
+    | Node of (int * 'a) (* Node of (priority, key) -- should I use a record? *)
 ;;
 
 
@@ -26,6 +26,13 @@ exception Empty_binheap
 let get_priority heap i =
     match heap.a.(i) with
     | Node(prio, _) -> prio
+    | Empty -> raise Empty_binheap
+;;
+
+
+let get_key heap i =
+    match heap.a.(i) with
+    | Node(_, key) -> key
     | Empty -> raise Empty_binheap
 ;;
 
@@ -62,8 +69,8 @@ let make_from capacity (a : (int * 'a) array) : 'a t =
     (* TODO: If capacity < Array.length a, raise *)
     let a' = Array.make capacity Empty in
     Array.iteri (fun i -> fun x ->
-        let prio, value = x in
-        a'.(i) <- Node(prio, value)
+        let prio, key = x in
+        a'.(i) <- Node(prio, key)
     ) a;
     let heap = { a = a'; size = Array.length a } in
     let rec loop i = 
@@ -106,7 +113,7 @@ let extract heap =
     heap.a.(0) <- heap.a.(iswap);
     heapify heap 0;
     match root with
-    | Node(priority, value) -> (priority, value)
+    | Node(priority, key) -> (priority, key)
     | Empty -> raise Empty_binheap
 ;;
 
@@ -116,10 +123,10 @@ let parent i =
 ;;
 
 
-let insert heap priority value =
+let insert heap key priority =
     if (size heap) = (capacity heap) then (* TODO: Resize the array *) ();
     let asize = heap.size in
-    heap.a.(asize) <- Node(priority, value);
+    heap.a.(asize) <- Node(priority, key);
     heap.size <- asize + 1;
     (* Printf.printf "size=%d size'=%d\n" asize heap.size; *)
     (* Recursively walk up the tree until the heap property is restored *)
@@ -134,7 +141,34 @@ let insert heap priority value =
             let tmp = heap.a.(i) in
             heap.a.(i) <- heap.a.(iparent);
             heap.a.(iparent) <- tmp;
-            loop (iparent);
+            loop iparent;
     in
-    loop asize;
+    loop asize
+;;
+
+
+let decrease_key heap key priority =
+    (* We have a min heap, so heapify upwards recursively *)
+    (* Just linearly search for the key. TODO: Could we be more clever by searching by level? *)
+    let rec find_key i =
+        (* TODO raise if key not found (check heap.size) *)
+        if get_key heap i = key then i
+        else find_key (succ i)
+    in
+    let key_pos = find_key 0 in
+    heap.a.(key_pos) <- Node(key, priority);
+
+    let rec heapify_loop i =
+        if i = 0 then ()
+        else
+            let iparent = parent i in
+            let curr_prio = get_priority heap i in
+            let parent_prio = get_priority heap iparent in
+            if curr_prio < parent_prio then
+                let tmp = heap.a.(i) in
+                heap.a.(i) <- heap.a.(iparent);
+                heap.a.(iparent) <- tmp;
+                heapify_loop iparent;
+    in
+    heapify_loop key_pos
 ;;

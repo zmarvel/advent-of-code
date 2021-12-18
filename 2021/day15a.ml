@@ -40,46 +40,91 @@ open Utils;;
 exception Invalid_input_file of string
 
 
-let dijkstra nodes =
+(** Nodes is an array of (label, value). In our case, [label] is an [(x, y)] tuple, and should be
+ * increasing--so node [i] has a label of [(i % width, i / width)].
+ *)
+let dijkstra nodes width height =
+    let num_nodes = (Array.length nodes) in
+    let q = Binheap.make num_nodes in
+    let distance = Array.make num_nodes (-1) in (* -1 = INFINITY *)
+    let prev = Array.make num_nodes (-1) in (* -1 = UNDEFINED *)
+    (* TODO Binheap.init ? *)
+    Array.iteri (fun i -> fun _ ->
+        Binheap.insert q distance.(i) i
+    ) nodes;
+    let seen = Array.make num_nodes false in
+
+    (* Returns list of neighbor indices in nodes *)
+    let get_neighbors i =
+        let x = i mod width in
+        let y = i / width in
+        (* let find_neighbor = function
+            | x, y -> array_find_pos (fun node ->
+                    let label, value = node in
+                    label = (x, y)) nodes
+        in *)
+        let xy_to_i = function
+            | x, y -> x * width + y
+        in
+        let neighbors = [] in
+        let neighbors = if x > 0 then (x - 1, y) :: neighbors else neighbors in
+        let neighbors = if y > 0 then (x, y - 1) :: neighbors else neighbors in
+        let neighbors = if x < width - 1 then (x + 1, y) :: neighbors else neighbors in
+        let neighbors = if y < height - 1 then (x, y + 1) :: neighbors else neighbors in
+        List.map xy_to_i neighbors
+    in
+
+    let rec loop distance prev =
+        if Binheap.empty q then distance, prev
+        else begin
+            let _udist, u = Binheap.extract q in
+            let neighbors = get_neighbors u in
+            let unseen_neighbors = List.filter (Array.get seen) neighbors in
+            List.iter (fun v ->
+                let _vlabel, vweight = nodes.(v) in
+                let alt = distance.(u) + vweight in
+                if alt < distance.(v) then
+                    distance.(v) <- alt;
+                    prev.(v) <- u;
+                    Binheap.decrease_key q v alt
+                ) unseen_neighbors;
+            loop distance prev
+        end
+    in
+    loop distance prev
+;;
+
+
+let load_file inc =
+    let rec helper rows =
+        match input_line_opt inc with
+        | Some(line) ->
+                let line = String.trim line in
+                let costs = Array.map ctoi (array_of_string line) in
+                helper (costs :: rows)
+        | None -> array_reverse (Array.of_list rows)
+    in
+    let board = helper [] in
+    let width, height = get_matrix_dims board in
+
+    (* Turn the board into a ((x, y), value) array *)
+    let rec flatten_board costs x y =
+        if y = height then costs
+        else if x = width then flatten_board costs 0 (succ y)
+        else
+            let costs' = ((x, y), board.(x).(y)) :: costs in
+            flatten_board costs' (succ x) y
+    in
+    List.rev (flatten_board [] 0 0)
+;;
+
+let do_game flat_board =
     ()
 ;;
 
 
-(* Load a list of points followed by a list of folds *)
-let load_file inc =
-    let rec load_template template =
-        match input_line_opt inc with
-        | Some(line) -> (
-                Printf.printf "line=%s\n" line;
-                let line = String.trim line in
-                if String.length line > 0 then
-                    load_template line
-                else template)
-        | None -> raise (Invalid_input_file "Expected replacements after template")
-    in
-    let template = load_template "" in
-    (* Just load replacements into a list of 3-tuples *)
-    let rec load_replacements replacements =
-        match input_line_opt inc with
-        | Some (line) -> (
-                Printf.printf "line=%s\n" line;
-                let replacement = line
-                    |> String.trim
-                    |> String.split_on_char ' '
-                    |> (function
-                            | pair :: _arrow :: between :: [] ->
-                                    (pair.[0], pair.[1], between.[0])
-                            | _ -> raise (Invalid_input_file "Unexpected replacement format"))
-                in
-                load_replacements (replacement :: replacements))
-        | None -> replacements
-    in
-    let replacements = Array.of_list (load_replacements []) in
-    (template, replacements)
-;;
-
 let process_file filename =
-    let inc = open_in filename in
+    let _inc = open_in filename in
     Printf.printf "filename=%s\n" filename;
 
     Printf.printf "\n";

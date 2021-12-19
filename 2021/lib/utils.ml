@@ -492,6 +492,21 @@ let matrix_slide_down num_rows fill m =
 ;;
 
 
+let matrix_blit msrc src_pos mdst dst_pos len =
+    let srci, srcj = src_pos in
+    let dsti, dstj = dst_pos in
+    let rows, cols = len in
+    let rec loop i =
+        if i = rows then ()
+        else begin
+            Array.blit msrc.(srci + i) srcj mdst.(dsti + i) dstj cols;
+            loop (succ i)
+        end
+    in
+    loop 0
+;;
+
+
 let is_lowercase_ascii (c : char) =
     c >= 'a' && c <= 'z'
 ;;

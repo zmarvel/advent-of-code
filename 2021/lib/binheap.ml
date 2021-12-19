@@ -50,10 +50,15 @@ let get_key_opt heap i =
     else None
 ;;
 
+(** Get the index of the left child of node at index [i]. *)
+let get_left_child i = 2 * i + 1 ;;
+
+(** Get the index of the right child of node at index [i]. *)
+let get_right_child i = 2 * i + 2;;
 
 let rec heapify (heap : 'a t) (i : int) =
-    let left = 2 * i + 1 in
-    let right = 2 * i + 2 in
+    let left = get_left_child i in
+    let right = get_right_child i in
     let smallest = i in
     let currprio = get_priority heap smallest in
     let smallest =
@@ -159,10 +164,13 @@ exception Key_not_found of int
 
 let decrease_key heap priority key =
     (* We have a min heap, so heapify upwards recursively *)
-    (* Just linearly search for the key. TODO: Could we be more clever by searching by level? *)
+    (* Just linearly search for the key. We can't search more intelligently because we don't know
+       the priority associated with [key]. *)
     let rec find_key i key =
         match get_key_opt heap i with
-        | Some(other) -> if key = other then i else find_key (succ i) key
+        | Some(other) ->
+                if key = other then i
+                else find_key (succ i) key
         | None -> raise (Key_not_found key)
     in
     let key_pos = find_key 0 key in

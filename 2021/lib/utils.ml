@@ -57,6 +57,31 @@ let int_to_binary_string n num_bits =
 ;;
 
 
+let ctoi_base base c =
+    let x =
+        let base_offset, base_char =
+            if c >= '0' && c <= '9' then (0, '0')
+            else if c >= 'a' && c <= 'z' then (10, 'a')
+            else if c >= 'A' && c <= 'Z' then (10, 'A')
+            else raise (Invalid_digit c)
+        in
+        base_offset + ((int_of_char c) - (int_of_char base_char))
+    in
+    if x < base then x
+    (* else raise (Invalid_digit (char_of_int x)) *)
+    else raise (Invalid_digit c)
+;;
+
+
+let hex_string_to_bytes s =
+    String.init (String.length s / 2) (fun i ->
+        let hi = ctoi_base 16 s.[i] in
+        let lo = ctoi_base 16 s.[i+1] in
+        char_of_int ((hi lsl 4) lor lo)
+    )
+;;
+
+
 (** Convert an integer to an array, where each element is one bit of the original integer. For
  * example, [explode_int 10 6] returns [[| 0; 0; 1; 0; 1; 0 |]].
  *)

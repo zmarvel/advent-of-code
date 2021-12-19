@@ -6,7 +6,7 @@ RUN apt update && \
 
 #opam init --disable-sandboxing --auto-setup --yes && \
 #. /root/.profile && \
-#opam install --yes ounit2
+#opam install --yes ounit2 zarith
 
 
 # To use newer OCaml,

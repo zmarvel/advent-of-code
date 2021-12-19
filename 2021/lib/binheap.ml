@@ -37,6 +37,20 @@ let get_key heap i =
 ;;
 
 
+let size heap =
+    heap.size
+;;
+
+
+let get_key_opt heap i =
+    if i < size heap then
+        match heap.a.(i) with
+        | Node(_, key) -> Some(key)
+        | Empty -> None
+    else None
+;;
+
+
 let rec heapify (heap : 'a t) (i : int) =
     let left = 2 * i + 1 in
     let right = 2 * i + 2 in
@@ -94,11 +108,6 @@ let capacity heap =
 ;;
 
 
-let size heap =
-    heap.size
-;;
-
-
 let empty heap =
     heap.size = 0
 ;;
@@ -123,7 +132,7 @@ let parent i =
 ;;
 
 
-let insert heap key priority =
+let insert heap priority key =
     if (size heap) = (capacity heap) then (* TODO: Resize the array *) ();
     let asize = heap.size in
     heap.a.(asize) <- Node(priority, key);
@@ -146,17 +155,18 @@ let insert heap key priority =
     loop asize
 ;;
 
+exception Key_not_found of int
 
-let decrease_key heap key priority =
+let decrease_key heap priority key =
     (* We have a min heap, so heapify upwards recursively *)
     (* Just linearly search for the key. TODO: Could we be more clever by searching by level? *)
-    let rec find_key i =
-        (* TODO raise if key not found (check heap.size) *)
-        if get_key heap i = key then i
-        else find_key (succ i)
+    let rec find_key i key =
+        match get_key_opt heap i with
+        | Some(other) -> if key = other then i else find_key (succ i) key
+        | None -> raise (Key_not_found key)
     in
-    let key_pos = find_key 0 in
-    heap.a.(key_pos) <- Node(key, priority);
+    let key_pos = find_key 0 key in
+    heap.a.(key_pos) <- Node(priority, key);
 
     let rec heapify_loop i =
         if i = 0 then ()
@@ -171,4 +181,37 @@ let decrease_key heap key priority =
                 heapify_loop iparent;
     in
     heapify_loop key_pos
+;;
+
+
+let log2 a =
+    log10 a /. log10 2.
+;;
+
+
+let get_level i = floor (log2 (float_of_int (succ i)))
+;;
+
+
+let print heap =
+    let rec loop i =
+        if i = heap.size then ()
+        else
+            (*
+            0 -> 0   log(1)
+            (1, 2) -> 1   floor(log(i + 1))
+            (3, 4, 5, 6) -> 2
+            *)
+            match heap.a.(i) with
+            | Node(priority, value) ->
+                    let level = get_level i in
+                    Printf.printf "(%d, %d) " priority value;
+                    if get_level (succ i) > level then
+                        Printf.printf "\n";
+                    loop (succ i)
+            | Empty -> ()
+    in
+    Printf.printf "size=%d\n" heap.size;
+    loop 0;
+    Printf.printf "\n\n"
 ;;

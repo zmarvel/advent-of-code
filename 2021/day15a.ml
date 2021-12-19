@@ -40,13 +40,25 @@ open Utils;;
 exception Invalid_input_file of string
 
 
+let i_to_xy width i =
+    let x = i mod width in
+    let y = i / width in
+    x, y
+;;
+let xy_to_i width = function
+    | x, y -> y * width + x
+;;
+
+
+
 (** Nodes is an array of (label, value). In our case, [label] is an [(x, y)] tuple, and should be
  * increasing--so node [i] has a label of [(i % width, i / width)].
  *)
-let dijkstra nodes width height =
+let dijkstra nodes width height source _target =
     let num_nodes = (Array.length nodes) in
+    let _node_label, node_weight = array_split nodes in
     let q = Binheap.make num_nodes in
-    let distance = Array.make num_nodes (-1) in (* -1 = INFINITY *)
+    let distance = Array.make num_nodes 999999 in (* 999999 = INFINITY *)
     let prev = Array.make num_nodes (-1) in (* -1 = UNDEFINED *)
     (* TODO Binheap.init ? *)
     Array.iteri (fun i -> fun _ ->
@@ -54,24 +66,35 @@ let dijkstra nodes width height =
     ) nodes;
     let seen = Array.make num_nodes false in
 
+    distance.(source) <- 0;
+    seen.(source) <- true;
+    Binheap.decrease_key q node_weight.(source) 0;
+
     (* Returns list of neighbor indices in nodes *)
     let get_neighbors i =
-        let x = i mod width in
-        let y = i / width in
+        let x, y = i_to_xy width i in
         (* let find_neighbor = function
             | x, y -> array_find_pos (fun node ->
                     let label, value = node in
                     label = (x, y)) nodes
         in *)
-        let xy_to_i = function
-            | x, y -> x * width + y
-        in
+        (* TODO: Don't really need the conversions--can just add and subtract 1 and width *)
         let neighbors = [] in
         let neighbors = if x > 0 then (x - 1, y) :: neighbors else neighbors in
         let neighbors = if y > 0 then (x, y - 1) :: neighbors else neighbors in
         let neighbors = if x < width - 1 then (x + 1, y) :: neighbors else neighbors in
         let neighbors = if y < height - 1 then (x, y + 1) :: neighbors else neighbors in
-        List.map xy_to_i neighbors
+        List.map (xy_to_i width) neighbors
+    in
+
+    let _print_as_grid a width height =
+        (* Printf.printf "%s\n" (format_array_of_int a); *)
+        let rec loop i j =
+            if i = height then ()
+            else if j = width then (Printf.printf "\n"; loop (succ i) 0)
+            else (Printf.printf "% 7d " a.(i * width + j); loop i (succ j))
+        in
+        loop 0 0
     in
 
     let rec loop distance prev =
@@ -79,15 +102,36 @@ let dijkstra nodes width height =
         else begin
             let _udist, u = Binheap.extract q in
             let neighbors = get_neighbors u in
-            let unseen_neighbors = List.filter (Array.get seen) neighbors in
-            List.iter (fun v ->
-                let _vlabel, vweight = nodes.(v) in
+            let unseen_neighbors = List.filter (fun i -> not seen.(i)) neighbors in
+            (*
+            Printf.printf "----------------------------\n";
+            Printf.printf "neighbors=%s\n" (format_list_of_int neighbors);
+            Printf.printf "unseen_neighbors=%s\n" (format_list_of_int unseen_neighbors);
+            *)
+            let visit_neighbor v =
+                let vweight = node_weight.(v) in
                 let alt = distance.(u) + vweight in
-                if alt < distance.(v) then
+                (* Printf.printf "u=%d/%s[%d] v=%d/%s[%d] alt=%d\n" u (format_pair_of_int (i_to_xy
+                   width u)) distance.(u) v (format_pair_of_int (i_to_xy width v)) distance.(v) alt;
+                   *)
+                if alt < distance.(v) then begin
+                    (* Printf.printf "decrease_key %d %d->%d\n" v distance.(v) alt; *)
                     distance.(v) <- alt;
                     prev.(v) <- u;
-                    Binheap.decrease_key q v alt
-                ) unseen_neighbors;
+                    Binheap.decrease_key q alt v;
+                    (* Binheap.print q *)
+                end
+            in
+            List.iter visit_neighbor unseen_neighbors;
+            seen.(u) <- true;
+            (*
+            Printf.printf "distance=\n";
+            print_as_grid distance width height;
+            Printf.printf "prev=\n";
+            print_as_grid prev width height;
+            Printf.printf "node_weight=\n";
+            print_as_grid node_weight width height;
+            *)
             loop distance prev
         end
     in
@@ -104,7 +148,7 @@ let load_file inc =
                 helper (costs :: rows)
         | None -> array_reverse (Array.of_list rows)
     in
-    let board = helper [] in
+    let board = matrix_transpose (helper []) in
     let width, height = get_matrix_dims board in
 
     (* Turn the board into a ((x, y), value) array *)
@@ -115,25 +159,34 @@ let load_file inc =
             let costs' = ((x, y), board.(x).(y)) :: costs in
             flatten_board costs' (succ x) y
     in
-    List.rev (flatten_board [] 0 0)
+    (width, height), (List.rev (flatten_board [] 0 0))
 ;;
 
-let do_game flat_board =
-    ()
+let do_game flat_board width height =
+    let source = 0 in
+    let target = (Array.length flat_board) - 1 in
+    let distance, _prev = dijkstra flat_board width height source target in
+    distance.(target)
 ;;
 
 
 let process_file filename =
-    let _inc = open_in filename in
+    let inc = open_in filename in
     Printf.printf "filename=%s\n" filename;
+    let dims, node_list = load_file inc in
+    let nodes = Array.of_list node_list in
+    let width, height = dims in
+    let result = do_game nodes width height in
+    Printf.printf "result=%d\n" result;
 
     Printf.printf "\n";
 ;;
 
 
 let () =
-    process_file "15-test.input";
-    (*
+    process_file "15-test1.input";
+    process_file "15-test2.input";
     process_file "15.input";
+    (*
     *)
 ;;

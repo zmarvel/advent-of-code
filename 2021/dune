@@ -3,5 +3,5 @@
                day7a day7b day8a day8b day9a day9b day10a day10b day11a day11b day12a day12b
                day13a day13b day14a day14b day15a)
         (modes exe byte)
-        (libraries utils binheap))
-
+        (libraries utils point binheap)
+        )

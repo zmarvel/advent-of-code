@@ -5,3 +5,8 @@
 (library
   (name binheap)
   (modules binheap))
+
+(library
+  (name point)
+  (libraries utils)
+  (modules point))

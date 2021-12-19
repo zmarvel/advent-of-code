@@ -223,8 +223,9 @@ let array_to_binary =
 ;;
 
 
-(** Introduced in OCaml 4.13.0 *)
-let array_split a =
+(** Split an array of pairs into a pair of arrays. Introduced in OCaml 4.13.0.
+    *)
+let array_split (a : ('a * 'b) array) : ('a array * 'b array)  =
     let a1 =
         Array.init (Array.length a) (fun i ->
             let x1, _ = a.(i) in

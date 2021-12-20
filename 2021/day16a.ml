@@ -136,15 +136,20 @@ let mask n_bits =
 
 let rec get_bits nums inum start_bit num_bits =
     let n = nums.(inum) in
-    let num_bits_part = 8 - start_bit in
+    let num_bits_part = min (8 - start_bit) num_bits in
     let num_bits' = num_bits - num_bits_part in
-    let n_part = (n lsr (8 - start_bit - num_bits_part)) land (mask num_bits_part) in
-    Printf.printf "inum=%d start_bit=%d num_bits=%d\n" inum start_bit num_bits;
-    Printf.printf "  num_bits_part=%d num_bits'=%d n=%x n_part=%x\n" num_bits_part num_bits' n n_part;
+    let shift = 8 - num_bits_part - start_bit in
+    let n_mask = mask num_bits_part in
+    let n_part = (n lsr shift) land (n_mask) in
     (*
+    Printf.printf "inum=%d start_bit=%d num_bits=%d\n" inum start_bit num_bits;
+    Printf.printf "  num_bits_part=%d num_bits'=%d\n" num_bits_part num_bits';
+    Printf.printf "  n=%x shift=%d n_mask=%x n_part=%x\n" n shift n_mask n_part;
     *)
     if num_bits' = 0 then n_part
-    else (n_part lsl 8) lor (get_bits nums (succ inum) 0 num_bits')
+    else
+        let next = get_bits nums (succ inum) 0 num_bits' in
+        (n_part lsl num_bits') lor (next)
 ;;
 
 
@@ -153,7 +158,7 @@ let rec get_bits nums inum start_bit num_bits =
 
 let assert_equal expected actual =
     if expected <> actual then
-        Printf.printf "expected=%d actual=%d\n" expected actual;
+        Printf.printf "Not equal: expected=%x actual=%x\n" expected actual;
     assert (expected = actual);
 ;;
 
@@ -165,10 +170,10 @@ let process_file filename =
     let encoded = load_file inc in
     Printf.printf "encoded=%s\n" (format_array encoded (fun x -> Printf.sprintf "%02x" x));
 
-    Printf.printf "------------\n";
-    assert_equal (get_bits encoded 0 1 7) (0xd2 land 0x7f);
-    Printf.printf "------------\n";
-    assert_equal (get_bits encoded 0 0 6) (0xd2 lsr 1);
+    assert_equal (0xd2 land 0x7f) (get_bits encoded 0 1 7);
+    assert_equal ((0xd2 lsr 2) land 0x7f) (get_bits encoded 0 0 6);
+    assert_equal 0x2f (get_bits encoded 0 4 8);
+    assert_equal ((0xfe28 lsr 2) land 0xff) (get_bits encoded 1 6 8);
 
     Printf.printf "\n";
 ;;

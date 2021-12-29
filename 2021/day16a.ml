@@ -174,7 +174,9 @@ let parse_header parts ipart ibit =
     let encoded_header = get_bits parts ipart ibit 6 in
     let version = encoded_header lsr 3 in
     let type_id = encoded_header land 0x7 in
-    (* Printf.printf " header encoded=%x version=%d type_id=%d\n" encoded_header version type_id; *)
+    (*
+    Printf.printf " header encoded=%x version=%d type_id=%d\n" encoded_header version type_id;
+    *)
     { version; type_id }
 ;;
 
@@ -187,7 +189,9 @@ let add_bits ipart ibit len =
 ;;
 
 let parse_literal header parts ipart ibit =
+    (*
     Printf.printf " literal ipart=%d ibit=%d\n" ipart ibit;
+    *)
     (* 0011 1000 0000 0000 0110 1111 0100 0101 0010 1001 0001 0010 0000 0000 *)
     let rec loop ipart ibit len num =
         let part = get_bits parts ipart ibit 5 in
@@ -204,7 +208,9 @@ let parse_literal header parts ipart ibit =
             len', num'
     in
     let len, value = loop ipart ibit 0 0 in
+    (*
     Printf.printf "  len=%d value=%d\n" len value;
+    *)
     len, Literal {header; value}
 ;;
 
@@ -222,42 +228,69 @@ let rec parse_packet encoded ipart ibit =
             let _ = () in
             (* Next 15 bits are total length of subpackets *)
             let len = get_bits parts ipart ibit 15 in
+            (*
             Printf.printf " (operator0 len(bits)=%d ipart=%d ibit=%d\n" len ipart ibit;
+            *)
             let ipart, ibit = add_bits ipart ibit 15 in
             let children_len, children =
-                let rec loop i ipart ibit packets =
-                    if i = (len + 1 + 15) then len, List.rev packets
+                let rec parse_children0 i ipart ibit packets =
+                    (*
+                    Printf.printf "   (parse_children0 i=%d ipart=%d ibit=%d\n" i ipart ibit;
+                    *)
+                    if i = (len + 1 + 15) then begin
+                        (*
+                        Printf.printf "   )parse_children0 len=%d\n" i;
+                        *)
+                        i, List.rev packets
+                    end
                     else
                         let packet_len, packet = parse_packet parts ipart ibit in
                         let ipart', ibit' = add_bits ipart ibit packet_len in
-                        Printf.printf "   child0 packet_len=%d\n" packet_len;
-                        loop (i + packet_len) ipart' ibit' (packet :: packets)
+                        (*
+                        Printf.printf "   )parse_children0 packet_len=%d\n" packet_len;
+                        *)
+                        parse_children0 (i + packet_len) ipart' ibit' (packet :: packets)
                 in
-                loop (1 + 15) ipart ibit []
+                parse_children0 (1 + 15) ipart ibit []
             in
             let num_children = List.length children in
+            (*
             Printf.printf " )operator0 children_len=%d\n" children_len;
+            *)
             (* total length of children plus length type id plus children length*)
             (children_len, Operator {header; length_type_id; length = num_children; children})
         else
             (* Next 11 bits are the number of subpackets *)
             let _ = () in
             let num_children = get_bits parts ipart ibit 11 in
+            (*
             Printf.printf " (operator1 ipart=%d ibit=%d num_children=%d\n" ipart ibit num_children;
+            *)
             let ipart, ibit = add_bits ipart ibit 11 in
             let children_len, children =
-                let rec loop i ipart ibit len packets =
-                    (* Printf.printf "loop i=%d ipart=%d ibit=%d len=%d\n" i ipart ibit len; *)
-                    if i = num_children then len, List.rev packets
+                let rec parse_children1 i ipart ibit len packets =
+                    (*
+                    Printf.printf "   (parse_children1 i=%d ipart=%d ibit=%d len=%d\n" i ipart ibit len;
+                    *)
+                    if i = num_children then begin
+                        (*
+                        Printf.printf "   )parse_children1\n";
+                        *)
+                        len, List.rev packets
+                    end
                     else
                         let packet_len, packet = parse_packet parts ipart ibit in
                         let ipart', ibit' = add_bits ipart ibit packet_len in
-                        Printf.printf "   child1 packet_len=%d\n" packet_len;
-                        loop (succ i) ipart' ibit' (len + packet_len) (packet :: packets)
+                        (*
+                        Printf.printf "   )parse_children1 packet_len=%d\n" packet_len;
+                        *)
+                        parse_children1 (succ i) ipart' ibit' (len + packet_len) (packet :: packets)
                 in
-                loop (1 + 11) ipart ibit 0 []
+                parse_children1 0 ipart ibit (1 + 11) []
             in
+            (*
             Printf.printf " )operator1 children_len=%d\n" children_len;
+            *)
             (* total length of children plus length type id plus children length *)
             (children_len, Operator {header; length_type_id; length = num_children; children})
     in
@@ -366,7 +399,10 @@ VVVTTTIL LLLLLLLL LLLLLLAA AAAAAAAA ABBBBBBB BBBBBBBB B
             | "16-test7.input" -> 31
             | _ -> -1
         in
-        assert_equal expected (sum_versions parsed);
+        let result = sum_versions parsed in
+        if expected <> -1 then
+            assert_equal expected result;
+        Printf.printf "result=%d\n" result;
 
     Printf.printf "\n";
 ;;
@@ -406,9 +442,32 @@ VVVTTTIL LLLLLLLL LL                                                 VV VTTTILLL
        *)
     process_file "16-test5.input";
     process_file "16-test6.input";
+
+    (* 7
+A0016C880162017C3686B18A3D4780
+0        1        2        3        4        5        6        7        8        9        10       11       12       13       14
+10100000 00000001 01101100 10001000 00000001 01100010 00000001 01111100 00110110 10000110 10110001 10001010 00111101 01000111 10000000
+VVVTTTIL LLLLLLLL LLLLLL <0:91>
+                        VV VTTTILLL LLLLLLLL <1:1>
+                                             VVVTTTIL LLLLLLLL LL <1:5>
+10100000 00000001 01101100 10001000 00000001 01100010 00000001 01111100 00110110 10000110 10110001 10001010 00111101 01000111 10000000
+                                                                 VVVTTT AAAAAVVV TTTBBBBB VVVTTTCC CCCVVVTT TDDDDDVV VTTTEEEE E
+                                                                            6           6           12          15           15
+
+101 = 5
+001 = 1  6
+011 = 3  9
+111 = 7  16
+110 = 6  22
+101 = 5  27
+010 = 2  29
+010 = 2  31
+
+
+       *)
     process_file "16-test7.input";
 
-    (*
     process_file "16.input";
+    (*
     *)
 ;;

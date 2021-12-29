@@ -57,6 +57,12 @@ let int_to_binary_string n num_bits =
 ;;
 
 
+(** Integer division, with the result rounded up *)
+let divceil x y =
+    (x + (y - 1)) / y
+;;
+
+
 let ctoi_base base c =
     let x =
         let base_offset, base_char =

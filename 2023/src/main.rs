@@ -1,8 +1,8 @@
 mod day01;
 
 use std::fs::File;
-use std::path::Path;
 use std::io::{self, BufRead};
+use std::path::Path;
 
 fn read_lines(file_path: &Path) -> io::Result<io::Lines<io::BufReader<File>>> {
     let file = File::open(file_path)?;

@@ -1,4 +1,4 @@
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Copy, Clone)]
 pub struct DiceCount {
     pub red: i64,
     pub green: i64,
@@ -22,32 +22,30 @@ fn parse_round(round: &str) -> DiceCount {
     count
 }
 
-// Returns the line ID if
-pub fn parse_line(requirements: &DiceCount, line: &str) -> Option<i64> {
+fn update_min_set(min_set: &DiceCount, round: &DiceCount) -> DiceCount {
+    DiceCount {
+        red: std::cmp::max(min_set.red, round.red),
+        green: std::cmp::max(min_set.green, round.green),
+        blue: std::cmp::max(min_set.blue, round.blue),
+    }
+}
+
+fn min_set_power(count: &DiceCount) -> i64 {
+    count.red * count.green * count.blue
+}
+
+// Returns the "power" of the line's "minimum set."
+pub fn parse_line(line: &str) -> i64 {
     // Game 100: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
     let id_and_rounds: Vec<&str> = line.split(": ").collect();
-    // Game 100
-    let id = id_and_rounds
-        .get(0)
-        .unwrap()
-        .split_whitespace()
-        .collect::<Vec<&str>>()
-        .get(1)
-        .unwrap()
-        .parse::<i64>()
-        .unwrap();
 
     // 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+    let mut min_set = DiceCount::default();
     for round in id_and_rounds.get(1).unwrap().split("; ") {
         let count = parse_round(&round);
-        if count.red > requirements.red
-            || count.blue > requirements.blue
-            || count.green > requirements.green
-        {
-            return None;
-        }
+        min_set = update_min_set(&min_set, &count);
     }
-    Some(id)
+    min_set_power(&min_set)
 }
 
 #[cfg(test)]
@@ -94,24 +92,8 @@ mod tests {
     }
 
     #[test]
-    fn parse_line_meets_requirements() {
-        let requirements = DiceCount {
-            red: 4,
-            green: 2,
-            blue: 6,
-        };
+    fn parse_line_min_set() {
         let line = "Game 12: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
-        assert_eq!(parse_line(&requirements, &line), Some(12));
-    }
-
-    #[test]
-    fn parse_line_doesnt_meet_requirements() {
-        let requirements = DiceCount {
-            red: 3,
-            green: 2,
-            blue: 6,
-        };
-        let line = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
-        assert_eq!(parse_line(&requirements, &line), None);
+        assert_eq!(parse_line(&line), 48);
     }
 }

@@ -24,17 +24,10 @@ fn day01() {
 
 fn day02() {
     if let Ok(lines) = read_lines(Path::new("day02.input")) {
-        let requirements = day02::DiceCount {
-            red: 12,
-            green: 13,
-            blue: 14,
-        };
         let mut result = 0;
         for line in lines {
-            match day02::parse_line(&requirements, &line.unwrap()) {
-                Some(count) => result += count,
-                None => (),
-            }
+            let power = day02::parse_line(&line.unwrap());
+            result += power
         }
         println!("{}", result)
     } else {

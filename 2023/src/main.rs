@@ -1,5 +1,6 @@
 mod day01;
 mod day02;
+mod day03;
 
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -35,6 +36,39 @@ fn day02() {
     }
 }
 
+fn day03() {
+    if let Ok(lines) = read_lines(Path::new("day03.input")) {
+        let lines_vec: Vec<String> = lines.map(|line| line.unwrap()).collect();
+        let empty_line = ".".repeat(lines_vec[0].len());
+        let mut result = 0;
+        for i in 0..lines_vec.len() {
+            let prev_line = if i == 0 {
+                &empty_line
+            } else {
+                &lines_vec[i - 1]
+            };
+            let curr_line = &lines_vec[i];
+            let next_line = if i == lines_vec.len() - 1 {
+                &empty_line
+            } else {
+                &lines_vec[i + 1]
+            };
+            result += day03::scan_line(&prev_line, &curr_line, &next_line)
+                .iter()
+                .map(|num_str| {
+                    String::from_utf8(num_str.iter().map(|c| *c as u8).collect())
+                        .unwrap()
+                        .parse::<i64>()
+                        .unwrap()
+                })
+                .fold(0, |acc, x| acc + x);
+        }
+        println!("result {}", result);
+    } else {
+        println!("Failed to open input")
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let arg = &args[1];
@@ -42,5 +76,7 @@ fn main() {
         day01();
     } else if arg == "day02" {
         day02();
+    } else if arg == "day03" {
+        day03();
     }
 }

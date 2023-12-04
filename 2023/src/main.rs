@@ -53,15 +53,7 @@ fn day03() {
             } else {
                 &lines_vec[i + 1]
             };
-            result += day03::scan_line(&prev_line, &curr_line, &next_line)
-                .iter()
-                .map(|num_str| {
-                    String::from_utf8(num_str.iter().map(|c| *c as u8).collect())
-                        .unwrap()
-                        .parse::<i64>()
-                        .unwrap()
-                })
-                .fold(0, |acc, x| acc + x);
+            result += day03::scan_line(&prev_line, &curr_line, &next_line);
         }
         println!("result {}", result);
     } else {

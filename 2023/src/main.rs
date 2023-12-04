@@ -1,6 +1,7 @@
 mod day01;
 mod day02;
 mod day03;
+mod day04;
 
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -61,6 +62,17 @@ fn day03() {
     }
 }
 
+fn day04() {
+    if let Ok(lines) = read_lines(Path::new("day04.input")) {
+        let lines_strings: Vec<String> = lines.map(|line| line.unwrap()).collect();
+        let lines_slices: Vec<&str> = lines_strings.iter().map(|line| line.as_str()).collect();
+        let result = day04::calculate_score(&lines_slices);
+        println!("result {}", result);
+    } else {
+        println!("Failed to open input")
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let arg = &args[1];
@@ -70,5 +82,7 @@ fn main() {
         day02();
     } else if arg == "day03" {
         day03();
+    } else if arg == "day04" {
+        day04();
     }
 }

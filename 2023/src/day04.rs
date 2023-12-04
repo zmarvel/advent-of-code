@@ -33,7 +33,7 @@ impl Scratchcard {
     }
 }
 
-fn count_winning_numbers(lines: &Vec<&str>) -> Vec<i64> {
+fn count_winning_numbers(lines: &[&str]) -> Vec<i64> {
     lines
         .iter()
         .map(|line| Scratchcard::from_line(line))
@@ -41,17 +41,20 @@ fn count_winning_numbers(lines: &Vec<&str>) -> Vec<i64> {
         .collect()
 }
 
-pub fn calculate_score(lines: &Vec<&str>) -> i64 {
-    count_winning_numbers(lines)
-        .iter()
-        .filter(|&&n| n > 0)
-        .map(|num_winning| 2i64.pow(*num_winning as u32 - 1))
-        .fold(0, |acc, x| acc + x)
+pub fn count_total_scorecards(lines: &[&str]) -> i64 {
+    let winning_numbers = count_winning_numbers(lines);
+    let mut card_count = vec![1].repeat(winning_numbers.len());
+    for (i, num) in winning_numbers.iter().enumerate() {
+        for j in (i + 1)..(i + *num as usize + 1) {
+            card_count[j] += card_count[i]
+        }
+    }
+    card_count.iter().fold(0, |acc, x| acc + x)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::day04::{calculate_score, count_winning_numbers, Scratchcard};
+    use crate::day04::{count_total_scorecards, count_winning_numbers, Scratchcard};
     use std::collections::HashSet;
 
     #[test]
@@ -108,6 +111,6 @@ mod tests {
             "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
             "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11",
         ];
-        assert_eq!(calculate_score(&lines), 13);
+        assert_eq!(count_total_scorecards(&lines), 30);
     }
 }

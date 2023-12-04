@@ -66,7 +66,7 @@ fn day04() {
     if let Ok(lines) = read_lines(Path::new("day04.input")) {
         let lines_strings: Vec<String> = lines.map(|line| line.unwrap()).collect();
         let lines_slices: Vec<&str> = lines_strings.iter().map(|line| line.as_str()).collect();
-        let result = day04::calculate_score(&lines_slices);
+        let result = day04::count_total_scorecards(&lines_slices);
         println!("result {}", result);
     } else {
         println!("Failed to open input")

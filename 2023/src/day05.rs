@@ -5,6 +5,11 @@ struct AlmanacRange {
     len: i64,
 }
 
+// Parse an usize from s or panic.
+fn parse_usize(s: &str) -> usize {
+    s.parse::<usize>().unwrap()
+}
+
 // Parse an i64 from s or panic.
 fn parse_i64(s: &str) -> i64 {
     s.parse::<i64>().unwrap()
@@ -40,23 +45,28 @@ impl AlmanacMap {
     }
 }
 
-pub fn read_seeds(line: &str) -> Vec<i64> {
+#[derive(Debug, PartialEq)]
+pub struct SeedRange {
+    start: i64,
+    len: i64,
+}
+
+pub fn read_seeds(line: &str) -> Vec<SeedRange> {
     let seed_ranges: Vec<i64> = line
         .split(": ")
         .nth(1)
         .unwrap()
         .split_whitespace()
-        .map(|s| s.parse::<i64>().unwrap())
+        .map(parse_i64)
         .collect();
-    let mut seeds: Vec<i64> = Vec::new();
+    let mut result: Vec<SeedRange> = Vec::new();
     for i in (0..seed_ranges.len()).into_iter().filter(|x| x % 2 == 0) {
-        let start = seed_ranges[i];
-        let len = seed_ranges[i + 1];
-        for i in 0..len {
-            seeds.push(start + i);
-        }
+        result.push(SeedRange {
+            start: seed_ranges[i] as i64,
+            len: seed_ranges[i + 1],
+        });
     }
-    seeds
+    result
 }
 
 pub fn read_maps(lines: &[String]) -> Vec<AlmanacMap> {
@@ -82,30 +92,35 @@ pub fn read_maps(lines: &[String]) -> Vec<AlmanacMap> {
         .collect()
 }
 
-pub fn map_seeds(seeds: &[i64], maps: &[AlmanacMap]) -> Vec<i64> {
-    let mut mapped = Vec::from(seeds);
-
-    for map in maps {
-        for i in 0..mapped.len() {
-            for range in map.ranges.iter() {
-                let before = mapped[i];
-                if mapped[i] >= range.source_start && mapped[i] < range.source_start + range.len {
-                    let offset = mapped[i] - range.source_start;
-                    mapped[i] = range.destination_start + offset;
-                    break;
+pub fn map_seeds(seed_ranges: &[SeedRange], maps: &[AlmanacMap]) -> i64 {
+    let mut smallest_result = std::i64::MAX;
+    for seed_range in seed_ranges {
+        println!("{:?}", seed_range);
+        for seed_i in seed_range.start..seed_range.start + seed_range.len {
+            let before = seed_i;
+            let mut mapped = seed_i;
+            for map in maps {
+                for almanac_range in map.ranges.iter() {
+                    if mapped >= almanac_range.source_start
+                        && mapped < almanac_range.source_start + almanac_range.len
+                    {
+                        let offset = mapped - almanac_range.source_start;
+                        mapped = almanac_range.destination_start + offset;
+                        break;
+                    }
+                    // println!("{} -> {}", before, mapped);
                 }
-                // println!("{} -> {}", before, mapped[i]);
-                // Otherwise mapped[i] -> mapped[i]
             }
+            smallest_result = std::cmp::min(mapped, smallest_result);
         }
+        println!("smallest_result={}", smallest_result);
     }
-
-    mapped
+    smallest_result
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::day05::{map_seeds, read_maps, read_seeds, AlmanacMap, AlmanacRange};
+    use crate::day05::{map_seeds, read_maps, read_seeds, AlmanacMap, AlmanacRange, SeedRange};
 
     #[test]
     fn read_seeds_success() {
@@ -113,8 +128,8 @@ mod tests {
         assert_eq!(
             read_seeds(&line),
             vec![
-                79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 55, 56, 57, 58, 59, 60, 61,
-                62, 63, 64, 65, 66, 67
+                SeedRange { start: 79, len: 14 },
+                SeedRange { start: 55, len: 13 }
             ]
         );
     }
@@ -151,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    fn read_maps_complex() {
+    fn map_seeds_success() {
         let lines: Vec<String> = vec![
             "seeds: 79 14 55 13",
             "",
@@ -192,6 +207,6 @@ mod tests {
         .collect();
         let seeds = read_seeds(&lines[0]);
         let maps = read_maps(&lines);
-        assert_eq!(*map_seeds(&seeds, &maps).iter().min().unwrap(), 46);
+        assert_eq!(map_seeds(&seeds, &maps), 46);
     }
 }

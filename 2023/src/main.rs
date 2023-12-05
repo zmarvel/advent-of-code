@@ -81,7 +81,7 @@ fn day05() {
         let seeds = day05::read_seeds(&lines_strings[0]);
         let maps = day05::read_maps(&lines_strings);
         let result = day05::map_seeds(&seeds, &maps);
-        println!("result {}", result.iter().min().unwrap());
+        println!("result {}", result);
     } else {
         println!("Failed to open input")
     }

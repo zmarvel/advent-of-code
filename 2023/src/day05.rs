@@ -41,12 +41,22 @@ impl AlmanacMap {
 }
 
 pub fn read_seeds(line: &str) -> Vec<i64> {
-    line.split(": ")
+    let seed_ranges: Vec<i64> = line
+        .split(": ")
         .nth(1)
         .unwrap()
         .split_whitespace()
         .map(|s| s.parse::<i64>().unwrap())
-        .collect()
+        .collect();
+    let mut seeds: Vec<i64> = Vec::new();
+    for i in (0..seed_ranges.len()).into_iter().filter(|x| x % 2 == 0) {
+        let start = seed_ranges[i];
+        let len = seed_ranges[i + 1];
+        for i in 0..len {
+            seeds.push(start + i);
+        }
+    }
+    seeds
 }
 
 pub fn read_maps(lines: &[String]) -> Vec<AlmanacMap> {
@@ -100,7 +110,13 @@ mod tests {
     #[test]
     fn read_seeds_success() {
         let line = "seeds: 79 14 55 13";
-        assert_eq!(read_seeds(&line), vec![79, 14, 55, 13]);
+        assert_eq!(
+            read_seeds(&line),
+            vec![
+                79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 55, 56, 57, 58, 59, 60, 61,
+                62, 63, 64, 65, 66, 67
+            ]
+        );
     }
 
     #[test]
@@ -176,6 +192,6 @@ mod tests {
         .collect();
         let seeds = read_seeds(&lines[0]);
         let maps = read_maps(&lines);
-        assert_eq!(map_seeds(&seeds, &maps), vec![82, 43, 86, 35]);
+        assert_eq!(*map_seeds(&seeds, &maps).iter().min().unwrap(), 46);
     }
 }

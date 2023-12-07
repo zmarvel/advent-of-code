@@ -43,6 +43,7 @@ fn is_winning(time: i64, button_time: i64, record_distance: i64) -> bool {
 // -x + 7 > 9 / x
 // -x > 9 / x - 7
 // x < -9 / x + 7
+
 // -x^2 > 9 - 7*x
 
 // -x^2 + 30*x > 200
@@ -87,16 +88,39 @@ fn check_solution(time: i64, record_distance: i64, winning_time: i64) -> i64 {
 }
 
 fn count_winning_strategies(time: i64, record_distance: i64) -> i64 {
-    let (pos_solution, neg_solution) = solve_winning_button_time(time, record_distance);
-    check_solution(time, record_distance, pos_solution)
-        + check_solution(time, record_distance, neg_solution)
+    let mut start = 0;
+    while !is_winning(time, start, record_distance) {
+        start += 1;
+    }
+
+    let mut i = start;
+    while is_winning(time, i, record_distance) {
+        i += 1;
+    }
+
+    i - start
+}
+
+pub fn do_part1(line_strings: &[String]) -> i64 {
+    let lines: Vec<&str> = line_strings.iter().map(|s| s.as_str()).collect();
+    let records = parse_lines(&lines);
+    let mut result = 1;
+    for i in 0..records.time.len() {
+        let winning = count_winning_strategies(records.time[i], records.distance[i]);
+        println!(
+            "time: {} distance: {} winning: {}",
+            records.time[i], records.distance[i], winning
+        );
+        result *= winning;
+    }
+    result
 }
 
 #[cfg(test)]
 mod tests {
     use crate::day06::{
-        calculate_final_distance, count_winning_strategies, is_winning, parse_line, parse_lines,
-        RaceRecords,
+        calculate_final_distance, count_winning_strategies, do_part1, is_winning, parse_line,
+        parse_lines, RaceRecords,
     };
 
     #[test]
@@ -150,5 +174,14 @@ mod tests {
         // This doesn't lead us to a winning search space, so we need a
         // different strategy to find a starting parameter.
         assert_eq!(count_winning_strategies(30, 200), 9);
+    }
+
+    #[test]
+    fn do_part1_success() {
+        let lines: Vec<String> = vec!["Time:      7  15   30", "Distance:  9  40  200"]
+            .iter()
+            .map(|&s| String::from(s))
+            .collect();
+        assert_eq!(do_part1(&lines), 288);
     }
 }

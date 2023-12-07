@@ -91,7 +91,7 @@ fn day05() {
 fn day06() {
     if let Ok(lines) = read_lines(Path::new("day06.input")) {
         let lines_strings: Vec<String> = lines.map(|line| line.unwrap()).collect();
-        let result = day06::do_part1(lines_strings.as_slice());
+        let result = day06::do_part2(lines_strings.as_slice());
         println!("result {}", result);
     } else {
         println!("Failed to open input")

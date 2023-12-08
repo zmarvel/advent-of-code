@@ -9,11 +9,25 @@ fn get_card_num(card: char) -> usize {
         'A' => 12,
         'K' => 11,
         'Q' => 10,
-        'J' => 9,
-        'T' => 8,
-        '2'..='9' => (card as usize) - ('2' as usize),
+        // 'J' => 9,
+        'T' => 9,
+        '2'..='9' => (card as usize) - ('2' as usize) + 1,
+        'J' => 0,
         _ => panic!("Invalid card: {:?}", card),
     }
+}
+
+fn upgrade_card_count(card_count: &[i64]) -> Vec<i64> {
+    let num_jokers: i64 = card_count[get_card_num('J')];
+    let mut new_card_count = Vec::from(card_count);
+    let max_idx = card_count
+        .iter()
+        .enumerate()
+        .max_by(|(_, &a), (_, b)| a.cmp(b))
+        .map(|(i, _)| i)
+        .unwrap();
+    new_card_count[max_idx] += num_jokers;
+    new_card_count
 }
 
 impl Hand {
@@ -32,16 +46,23 @@ impl Hand {
     }
 
     fn hand_type(&self) -> i64 {
-        let card_count: Vec<i64> = self.count_cards();
+        let card_count = upgrade_card_count(self.count_cards().as_slice());
+        Hand::hand_type_from_card_count(card_count.as_slice())
+    }
+
+    fn hand_type_from_card_count(card_count: &[i64]) -> i64 {
         if card_count.iter().any(|&count| count == 5) {
+            // Five of a kind
             7
         } else if card_count.iter().any(|&count| count == 4)
             && card_count.iter().any(|&count| count == 1)
         {
+            // Four of a kind
             6
         } else if card_count.iter().any(|&count| count == 3)
             && card_count.iter().any(|&count| count == 2)
         {
+            // Full house
             5
         } else if card_count.iter().any(|&count| count == 3)
             && card_count
@@ -50,8 +71,10 @@ impl Hand {
                 .count()
                 == 2
         {
+            // Three of a kind
             4
         } else if card_count.iter().filter(|&&count| count == 2).count() == 2 {
+            // Two pair
             3
         } else if card_count.iter().filter(|&&count| count == 2).count() == 1
             && card_count
@@ -60,8 +83,10 @@ impl Hand {
                 .count()
                 == 3
         {
+            // One pair
             2
         } else if card_count.iter().all(|&count| count < 1) {
+            // High card
             1
         } else {
             -1
@@ -173,7 +198,7 @@ mod tests {
                 .iter()
                 .map(|hand| hand.hand_type())
                 .collect::<Vec<i64>>(),
-            vec![2, 4, 3, 3, 4]
+            vec![2, 6, 3, 6, 6]
         );
     }
 
@@ -190,11 +215,11 @@ mod tests {
         let hands = parse_hands(lines.as_slice());
         indices.sort_by_key(|&i| &hands[i]);
         // 32T3K: 0
-        // KTJJT: 3
         // KK677: 2
         // T55J5: 1
         // QQQJA: 4
-        assert_eq!(indices, vec![0, 3, 2, 1, 4]);
+        // KTJJT: 3
+        assert_eq!(indices, vec![0, 2, 1, 4, 3]);
     }
 
     #[test]
@@ -206,6 +231,6 @@ mod tests {
             "KTJJT 220",
             "QQQJA 483",
         ];
-        assert_eq!(do_part1(lines.as_slice()), 6440);
+        assert_eq!(do_part1(lines.as_slice()), 5905);
     }
 }

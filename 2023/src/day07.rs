@@ -17,17 +17,62 @@ fn get_card_num(card: char) -> usize {
     }
 }
 
-fn upgrade_card_count(card_count: &[i64]) -> Vec<i64> {
+fn upgrade_hand_type(card_count: &[i64], hand_type: HandType) -> HandType {
     let num_jokers: i64 = card_count[get_card_num('J')];
-    let mut new_card_count = Vec::from(card_count);
-    let max_idx = card_count
-        .iter()
-        .enumerate()
-        .max_by(|(_, &a), (_, b)| a.cmp(b))
-        .map(|(i, _)| i)
-        .unwrap();
-    new_card_count[max_idx] += num_jokers;
-    new_card_count
+    use HandType::*;
+    match num_jokers {
+        0 => hand_type,
+        1 => match hand_type {
+            HighCard => OnePair,
+            OnePair => ThreeOfAKind,
+            TwoPair => FullHouse,
+            ThreeOfAKind => FourOfAKind,
+            FourOfAKind => FiveOfAKind,
+            _ => panic!(),
+        },
+        2 => match hand_type {
+            OnePair => ThreeOfAKind,
+            TwoPair => FourOfAKind,
+            FullHouse => FiveOfAKind,
+            _ => panic!(),
+        },
+        3 => match hand_type {
+            ThreeOfAKind => FourOfAKind,
+            FullHouse => FiveOfAKind,
+            _ => panic!(),
+        },
+        4 => match hand_type {
+            FourOfAKind => FiveOfAKind,
+            _ => panic!(),
+        },
+        5 => hand_type,
+        _ => panic!(),
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum HandType {
+    FiveOfAKind,
+    FourOfAKind,
+    FullHouse,
+    ThreeOfAKind,
+    TwoPair,
+    OnePair,
+    HighCard,
+}
+
+impl HandType {
+    fn get_number(&self) -> i64 {
+        match self {
+            Self::FiveOfAKind => 7,
+            Self::FourOfAKind => 6,
+            Self::FullHouse => 5,
+            Self::ThreeOfAKind => 4,
+            Self::TwoPair => 3,
+            Self::OnePair => 2,
+            Self::HighCard => 1,
+        }
+    }
 }
 
 impl Hand {
@@ -45,25 +90,27 @@ impl Hand {
         }
     }
 
-    fn hand_type(&self) -> i64 {
-        let card_count = upgrade_card_count(self.count_cards().as_slice());
-        Hand::hand_type_from_card_count(card_count.as_slice())
+    fn hand_type(&self) -> HandType {
+        let card_count = self.count_cards();
+        if let Some(hand_type) = Hand::hand_type_from_card_count(card_count.as_slice()) {
+            upgrade_hand_type(card_count.as_slice(), hand_type)
+        } else {
+            panic!("Invalid type for hand {:?}", self.cards);
+        }
     }
 
-    fn hand_type_from_card_count(card_count: &[i64]) -> i64 {
+    fn hand_type_from_card_count(card_count: &[i64]) -> Option<HandType> {
+        use HandType::*;
         if card_count.iter().any(|&count| count == 5) {
-            // Five of a kind
-            7
+            Some(FiveOfAKind)
         } else if card_count.iter().any(|&count| count == 4)
             && card_count.iter().any(|&count| count == 1)
         {
-            // Four of a kind
-            6
+            Some(FourOfAKind)
         } else if card_count.iter().any(|&count| count == 3)
             && card_count.iter().any(|&count| count == 2)
         {
-            // Full house
-            5
+            Some(FullHouse)
         } else if card_count.iter().any(|&count| count == 3)
             && card_count
                 .iter()
@@ -71,11 +118,9 @@ impl Hand {
                 .count()
                 == 2
         {
-            // Three of a kind
-            4
+            Some(ThreeOfAKind)
         } else if card_count.iter().filter(|&&count| count == 2).count() == 2 {
-            // Two pair
-            3
+            Some(TwoPair)
         } else if card_count.iter().filter(|&&count| count == 2).count() == 1
             && card_count
                 .iter()
@@ -83,13 +128,11 @@ impl Hand {
                 .count()
                 == 3
         {
-            // One pair
-            2
-        } else if card_count.iter().all(|&count| count < 1) {
-            // High card
-            1
+            Some(OnePair)
+        } else if card_count.iter().all(|&count| count < 2) {
+            Some(HighCard)
         } else {
-            -1
+            None
         }
     }
 
@@ -119,7 +162,7 @@ impl Ord for Hand {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         let our_type = self.hand_type();
         let other_type = other.hand_type();
-        let type_cmp = our_type.cmp(&other_type);
+        let type_cmp = our_type.get_number().cmp(&other_type.get_number());
         if type_cmp.is_eq() {
             self.compare_cards(other)
         } else {
@@ -145,7 +188,7 @@ pub fn do_part1(lines: &[&str]) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::day07::{do_part1, parse_hands, Hand};
+    use crate::day07::{do_part1, parse_hands, Hand, HandType};
 
     // 32T3K 765
     // T55J5 684
@@ -193,12 +236,13 @@ mod tests {
             "QQQJA 483",
         ];
         let hands = parse_hands(lines.as_slice());
+        use HandType::*;
         assert_eq!(
             hands
                 .iter()
                 .map(|hand| hand.hand_type())
-                .collect::<Vec<i64>>(),
-            vec![2, 6, 3, 6, 6]
+                .collect::<Vec<HandType>>(),
+            vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind]
         );
     }
 

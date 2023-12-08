@@ -4,6 +4,7 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
+mod day07;
 
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -98,6 +99,22 @@ fn day06() {
     }
 }
 
+fn day07() {
+    if let Ok(lines) = read_lines(Path::new("day07.input")) {
+        let lines_strings: Vec<String> = lines.map(|line| line.unwrap()).collect();
+        let result = day07::do_part1(
+            lines_strings
+                .iter()
+                .map(String::as_ref)
+                .collect::<Vec<&str>>()
+                .as_slice(),
+        );
+        println!("result {}", result);
+    } else {
+        println!("Failed to open input")
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let arg = &args[1];
@@ -113,5 +130,7 @@ fn main() {
         day05();
     } else if arg == "day06" {
         day06();
+    } else if arg == "day07" {
+        day07();
     }
 }

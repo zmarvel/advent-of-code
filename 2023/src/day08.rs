@@ -64,16 +64,38 @@ impl Map {
     }
 }
 
-pub fn do_part1(lines: &[&str]) -> i64 {
+fn advance_keys(
+    pos: &Vec<String>,
+    network: &HashMap<String, (String, String)>,
+    direction: &Direction,
+) -> Vec<String> {
+    pos.iter()
+        .map(|p| {
+            String::from({
+                let edges = network.get(p).unwrap();
+                String::from(match direction {
+                    Direction::Left => &edges.0,
+                    Direction::Right => &edges.1,
+                })
+            })
+        })
+        .collect()
+}
+
+pub fn do_part2(lines: &[&str]) -> i64 {
     let map = Map::parse(lines);
-    let mut pos = "AAA";
+    let starting_keys: Vec<String> = map
+        .network
+        .keys()
+        .filter(|k| k.ends_with("A"))
+        .map(String::from)
+        .collect();
+    println!("Starting keys: {:?}", starting_keys);
+    let mut pos = starting_keys;
     let mut idir = 0;
     let mut count = 0;
-    while pos != "ZZZ" {
-        pos = match map.instructions[idir] {
-            Direction::Left => map.network.get(pos).unwrap().0.as_str(),
-            Direction::Right => map.network.get(pos).unwrap().1.as_str(),
-        };
+    while !pos.iter().all(|s| s.ends_with("Z")) {
+        pos = advance_keys(&pos, &map.network, &map.instructions[idir]);
 
         idir = (idir + 1) % map.instructions.len();
         count += 1;
@@ -84,7 +106,7 @@ pub fn do_part1(lines: &[&str]) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::day08::{do_part1, parse_instructions, Direction, Map, Node};
+    use crate::day08::{do_part2, parse_instructions, Direction, Map, Node};
     use std::collections::HashMap;
 
     #[test]
@@ -160,27 +182,19 @@ mod tests {
     }
 
     #[test]
-    fn do_part1_success() {
-        let lines1 = vec![
-            "RL",
+    fn do_part2_success() {
+        let lines = vec![
+            "LR",
             "",
-            "AAA = (BBB, CCC)",
-            "BBB = (DDD, EEE)",
-            "CCC = (ZZZ, GGG)",
-            "DDD = (DDD, DDD)",
-            "EEE = (EEE, EEE)",
-            "GGG = (GGG, GGG)",
-            "ZZZ = (ZZZ, ZZZ)",
+            "11A = (11B, XXX)",
+            "11B = (XXX, 11Z)",
+            "11Z = (11B, XXX)",
+            "22A = (22B, XXX)",
+            "22B = (22C, 22C)",
+            "22C = (22Z, 22Z)",
+            "22Z = (22B, 22B)",
+            "XXX = (XXX, XXX)",
         ];
-        assert_eq!(do_part1(&lines1), 2);
-
-        let lines2 = vec![
-            "LLR",
-            "",
-            "AAA = (BBB, BBB)",
-            "BBB = (AAA, ZZZ)",
-            "ZZZ = (ZZZ, ZZZ)",
-        ];
-        assert_eq!(do_part1(&lines2), 6);
+        assert_eq!(do_part2(&lines), 6);
     }
 }

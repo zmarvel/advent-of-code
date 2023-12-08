@@ -119,7 +119,7 @@ fn day07() {
 fn day08() {
     if let Ok(lines) = read_lines(Path::new("day08.input")) {
         let lines_strings: Vec<String> = lines.map(|line| line.unwrap()).collect();
-        let result = day08::do_part1(
+        let result = day08::do_part2(
             lines_strings
                 .iter()
                 .map(String::as_ref)

@@ -64,22 +64,43 @@ impl Map {
     }
 }
 
+fn advance_key(
+    pos: &String,
+    network: &HashMap<String, (String, String)>,
+    direction: &Direction,
+) -> String {
+    let edges = network.get(pos).unwrap();
+    String::from(match direction {
+        Direction::Left => &edges.0,
+        Direction::Right => &edges.1,
+    })
+}
+
 fn advance_keys(
     pos: &Vec<String>,
     network: &HashMap<String, (String, String)>,
     direction: &Direction,
 ) -> Vec<String> {
     pos.iter()
-        .map(|p| {
-            String::from({
-                let edges = network.get(p).unwrap();
-                String::from(match direction {
-                    Direction::Left => &edges.0,
-                    Direction::Right => &edges.1,
-                })
-            })
-        })
+        .map(|p| advance_key(p, network, direction))
         .collect()
+}
+
+fn gcd(x: i64, y: i64) -> i64 {
+    let mut a = x;
+    let mut b = y;
+    while a != b {
+        if a > b {
+            a = a - b;
+        } else {
+            b = b - a;
+        }
+    }
+    a
+}
+
+fn lcm(x: i64, y: i64) -> i64 {
+    (x * y).abs() / gcd(x, y)
 }
 
 pub fn do_part2(lines: &[&str]) -> i64 {
@@ -91,22 +112,26 @@ pub fn do_part2(lines: &[&str]) -> i64 {
         .map(String::from)
         .collect();
     println!("Starting keys: {:?}", starting_keys);
-    let mut pos = starting_keys;
-    let mut idir = 0;
-    let mut count = 0;
-    while !pos.iter().all(|s| s.ends_with("Z")) {
-        pos = advance_keys(&pos, &map.network, &map.instructions[idir]);
-
-        idir = (idir + 1) % map.instructions.len();
-        count += 1;
-    }
-
-    count
+    starting_keys
+        .iter()
+        .map(|start_pos| {
+            let mut pos = String::from(start_pos);
+            let mut idir = 0;
+            let mut count = 0;
+            while !pos.ends_with("Z") {
+                pos = advance_key(&pos, &map.network, &map.instructions[idir]);
+                // println!("{:?}", pos);
+                idir = (idir + 1) % map.instructions.len();
+                count += 1;
+            }
+            count
+        })
+        .fold(1, lcm)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::day08::{do_part2, parse_instructions, Direction, Map, Node};
+    use crate::day08::{do_part2, gcd, lcm, parse_instructions, Direction, Map, Node};
     use std::collections::HashMap;
 
     #[test]
@@ -196,5 +221,16 @@ mod tests {
             "XXX = (XXX, XXX)",
         ];
         assert_eq!(do_part2(&lines), 6);
+    }
+
+    #[test]
+    fn gcd_success() {
+        assert_eq!(gcd(48, 18), 6);
+        assert_eq!(gcd(48, 47), 1);
+    }
+
+    #[test]
+    fn lcm_success() {
+        assert_eq!(lcm(4, 6), 12);
     }
 }

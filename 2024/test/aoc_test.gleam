@@ -1,5 +1,6 @@
 import day01
 import day02
+import day03.{Do, Dont, Mul}
 import gleam/list
 import gleeunit
 import gleeunit/should
@@ -31,7 +32,7 @@ pub fn day02_test() {
   day02.dampen_report([8, 6, 4, 3, 4])
   |> should.equal([8, 6, 4, 3])
   day02.dampen_report([2, 1, 2, 3, 4])
-  |> should.equal([ 1, 2, 3, 4])
+  |> should.equal([1, 2, 3, 4])
   day02.dampen_report([9, 7, 6, 2, 1])
   |> should.equal([])
   day02.dampen_report([65, 68, 71, 72, 71])
@@ -43,4 +44,28 @@ pub fn day02_test() {
   |> should.equal(0)
   day02.count_dampened_safe_reports(reports)
   |> should.equal(4)
+}
+
+pub fn day03_test() {
+  day03.extract_instructions("mul(44,46)")
+  |> should.equal([Mul(44, 46)])
+  day03.extract_instructions("mul(44,46) mul(123,4)mul(123,4)")
+  |> should.equal([Mul(44, 46), Mul(123, 4), Mul(123, 4)])
+  day03.extract_instructions(
+    "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))",
+  )
+  |> should.equal([Mul(2, 4), Mul(5, 5), Mul(11, 8), Mul(8, 5)])
+  day03.extract_instructions(
+    "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))",
+  )
+  |> should.equal([Mul(2, 4), Dont, Mul(5, 5), Mul(11, 8), Do, Mul(8, 5)])
+
+  day03.eval_input(
+    "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))",
+  )
+  |> should.equal(161)
+  day03.eval_input(
+    "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))",
+  )
+  |> should.equal(48)
 }

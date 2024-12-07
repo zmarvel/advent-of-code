@@ -1,7 +1,9 @@
 import day01
 import day02
 import day03.{Do, Dont, Mul}
+import day04
 import gleam/list
+import glearray
 import gleeunit
 import gleeunit/should
 
@@ -68,4 +70,80 @@ pub fn day03_test() {
     "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))",
   )
   |> should.equal(48)
+}
+
+pub fn day04_test() {
+  day04.to_matrix(["BCDE", "XMAS"])
+  |> day04.matrix_to_list()
+  |> should.equal([[0, 0, 0, 0], [1, 2, 3, 4]])
+
+  let m = day04.to_matrix(["AXXX", "MMAS"])
+  m
+  |> day04.matrix_to_list()
+  |> should.equal([[3, 1, 1, 1], [2, 2, 3, 4]])
+
+  m
+  |> day04.matrix_transpose()
+  |> day04.matrix_to_list()
+  |> should.equal([[3, 2], [1, 2], [1, 3], [1, 4]])
+
+  day04.mirror_horizontal(m)
+  |> day04.matrix_to_list()
+  |> should.equal([[2, 2, 3, 4], [3, 1, 1, 1]])
+
+  day04.mirror_vertical(m)
+  |> day04.matrix_to_list()
+  |> should.equal([[1, 1, 1, 3], [4, 3, 2, 2]])
+
+  day04.to_matrix(["..X...", ".SAMX.", ".A..A.", "XMAS.S", ".X...."])
+  |> day04.count_xmas()
+  |> should.equal(4)
+
+  day04.to_matrix([
+    "MMMSXXMASM", "MSAMXMSMSA", "AMXSXMAAMM", "MSAMASMSMX", "XMASAMXAMM",
+    "XXAMMXXAMA", "SMSMSASXSS", "SAXAMASAAA", "MAMMMXMMMM", "MXMXAXMASX",
+  ])
+  |> day04.count_xmas()
+  |> should.equal(18)
+}
+
+pub fn day04_diagonals_test() {
+  let m = day04.to_matrix(["AXXX", "MMAS"])
+  day04.diagonals(m)
+  |> list.map(glearray.to_list)
+  |> should.equal([
+    [3, 2],
+    [2],
+    [1, 3],
+    [1, 4],
+    [1],
+    [1, 3],
+    [4],
+    [1, 2],
+    [1, 2],
+    [3],
+    [3, 1],
+    [4],
+    [2, 1],
+    [2, 1],
+    [3],
+    [2, 3],
+    [2],
+    [3, 1],
+    [4, 1],
+    [1],
+  ])
+}
+
+pub fn day04_count_mas_x_test() {
+  day04.to_matrix(["M.S", ".A.", "M.S"])
+  |> day04.count_mas_x()
+  |> should.equal(1)
+
+  day04.to_matrix([
+    "MMMSXXMASM", "MSAMXMSMSA", "AMXSXMAAMM", "MSAMASMSMX", "XMASAMXAMM",
+    "XXAMMXXAMA", "SMSMSASXSS", "SAXAMASAAA", "MAMMMXMMMM", "MXMXAXMASX",
+  ])
+  |> day04.count_mas_x()
+  |> should.equal(9)
 }

@@ -301,7 +301,7 @@ pub fn count_mas_x(m: Matrix(Int)) -> Int {
 }
 
 pub fn main() {
-let input = read_input("inputs/day04.input")
+  let input = read_input("inputs/day04.input")
   io.println("XMAS Count: " <> int.to_string(count_xmas(input)))
   io.println("MAS X Count: " <> int.to_string(count_mas_x(input)))
 }

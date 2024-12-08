@@ -3,7 +3,9 @@ import day02
 import day03.{Do, Dont, Mul}
 import day04
 import day05
+import day06.{Down, Left, Right, Up}
 import gleam/list
+import gleam/set
 import glearray
 import gleeunit
 import gleeunit/should
@@ -291,4 +293,59 @@ pub fn day05_resort_update_test() {
   |> should.equal([61, 29, 13])
   day05.resort_update(rules, [97, 13, 75, 29, 47])
   |> should.equal([97, 75, 47, 29, 13])
+}
+
+pub fn day06_find_obstacles_test() {
+  let board = [
+    // 0123456789
+    "....#.....", "....^....#", "..........", "..#.......", ".......#..",
+    "..........", ".#........", "........#.", "#.........", "......#...",
+  ]
+  board
+  |> day06.find_obstacles
+  |> should.equal([
+    #(0, 4),
+    #(1, 9),
+    #(3, 2),
+    #(4, 7),
+    #(6, 1),
+    #(7, 8),
+    #(8, 0),
+    #(9, 6),
+  ])
+}
+
+pub fn day06_find_guard_test() {
+  [
+    // 0123456789
+    "....#.....", "....^....#", "..........", "..#.......", ".......#..",
+    "..........", ".#........", "........#.", "#.........", "......#...",
+  ]
+  |> day06.find_guard
+  |> should.equal(Ok(#(Up, #(1, 4))))
+  ["..v"]
+  |> day06.find_guard
+  |> should.equal(Ok(#(Down, #(0, 2))))
+  ["..<"]
+  |> day06.find_guard
+  |> should.equal(Ok(#(Left, #(0, 2))))
+  ["..>"]
+  |> day06.find_guard
+  |> should.equal(Ok(#(Right, #(0, 2))))
+}
+
+pub fn day06_step_guard_test() {
+  let board = [
+    "....#.....", ".........#", "..........", "..#.......", ".......#..",
+    "..........", ".#..^.....", "........#.", "#.........", "......#...",
+  ]
+  day06.step_guard(board)
+  |> should.equal(41)
+
+  let board = [
+    "....#.....", ".........#", "..........", "..#.......", ".......#..",
+    "..........", ".#..<.....", "........#.", "#.........", "......#...",
+  ]
+  day06.step_guard(board)
+  |> should.equal(26)
 }

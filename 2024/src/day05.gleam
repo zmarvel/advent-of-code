@@ -7,6 +7,7 @@ import gleam/list
 import gleam/option.{Some}
 import gleam/regexp.{Match}
 import gleam/result
+import gleam/set.{type Set}
 import gleam/string
 import gleam/yielder
 import glearray.{type Array}
@@ -39,13 +40,16 @@ type Rule =
 type RuleDict =
   Dict(Int, List(Rule))
 
+fn forward_index_rules(ordering_rules: List(Rule)) -> RuleDict {
+  ordering_rules
+  |> list.group(fn(rule) {
+    let #(a, b) = rule
+    a
+  })
+}
+
 pub fn index_rules(ordering_rules: List(#(Int, Int))) -> RuleDict {
-  let forward_rules =
-    ordering_rules
-    |> list.group(fn(rule) {
-      let #(a, b) = rule
-      a
-    })
+  let forward_rules = forward_index_rules(ordering_rules)
   // todo I'm not sure the reverse rules are needed
   let reverse_rules =
     ordering_rules
@@ -131,6 +135,91 @@ pub fn sum_middle_pages(updates: List(Update)) -> Int {
   |> int.sum
 }
 
+fn set_peek(s: Set(Int)) -> Int {
+  let assert Ok(first) =
+    s
+    |> set.to_list
+    |> list.first
+  first
+}
+
+fn visit(
+  unvisited: Set(Int),
+  rules: RuleDict,
+  n: Int,
+  acc: Update,
+) -> #(Set(Int), Update) {
+  case set.contains(unvisited, n) {
+    False -> #(unvisited, acc)
+    _ -> {
+      let edges =
+        rules
+        |> dict.get(n)
+        |> result.unwrap([])
+
+      io.println("n: " <> int.to_string(n))
+      edges
+      |> list.map(format_rule)
+      |> list.each(io.println)
+      let #(unvisited, acc) =
+        edges
+        |> list.fold(#(unvisited, acc), fn(state, edge) {
+          let #(unvisited, acc) = state
+          let #(_, m) = edge
+          visit(unvisited, rules, m, acc)
+        })
+      #(set.delete(unvisited, n), [n, ..acc])
+    }
+  }
+}
+
+fn toposort_aux(unvisited: Set(Int), rules: RuleDict, acc: Update) {
+  case set.is_empty(unvisited) {
+    True -> acc
+    _ -> {
+      let n = set_peek(unvisited)
+      let #(unvisited, acc) = visit(unvisited, rules, n, acc)
+      toposort_aux(unvisited, rules, acc)
+    }
+  }
+}
+
+pub fn toposort(rules: List(Rule)) -> Update {
+  let unvisited =
+    rules
+    |> list.fold(set.new(), fn(acc, rule) {
+      let #(a, b) = rule
+      acc
+      |> set.insert(a)
+      |> set.insert(b)
+    })
+  let rules = forward_index_rules(rules)
+
+  toposort_aux(unvisited, rules, [])
+}
+
+fn filter_sorted_updates(
+  rules: List(Rule),
+  updates: List(Update),
+) -> List(Update) {
+  let rules = index_rules(rules)
+  updates
+  |> list.filter(fn(update) { !check_update(update, rules) })
+}
+
+pub fn resort_update(rules: List(Rule), update: Update) -> Update {
+  let update_nums =
+    update
+    |> set.from_list
+  let rules =
+    rules
+    |> list.filter(fn(rule) {
+      let #(a, b) = rule
+      set.contains(update_nums, a) && set.contains(update_nums, b)
+    })
+  toposort(rules)
+}
+
 fn read_input(path: String) -> #(List(Rule), List(Update)) {
   let assert Ok(contents) = simplifile.read(path)
   let nonempty = fn(s) { s != "" }
@@ -138,7 +227,9 @@ fn read_input(path: String) -> #(List(Rule), List(Update)) {
     contents
     |> string.split("\n")
     |> list.split_while(nonempty)
-  let updates = updates |> list.filter(nonempty)
+  let updates =
+    updates
+    |> list.filter(nonempty)
   #(
     ordering_rules
       |> list.map(parse_ordering_rule),
@@ -152,5 +243,11 @@ pub fn main() {
   let sum =
     filter_updates(rules, updates)
     |> sum_middle_pages
-  io.println("Sum: " <> int.to_string(sum))
+  io.println("Sum (sorted): " <> int.to_string(sum))
+
+  let sum =
+    filter_sorted_updates(rules, updates)
+    |> list.map(fn(update) { resort_update(rules, update) })
+    |> sum_middle_pages
+  io.println("Sum (resorted): " <> int.to_string(sum))
 }

@@ -81,9 +81,7 @@ fn find_obstacle_up(
     int.compare(i - arow, i - brow)
   })
   |> list.first
-  |> result.map_error(fn (_) {
-    #(0, j)
-  })
+  |> result.map_error(fn(_) { #(0, j) })
 }
 
 fn find_obstacle_down(
@@ -106,9 +104,7 @@ fn find_obstacle_down(
     int.compare(arow - i, brow - i)
   })
   |> list.first
-  |> result.map_error(fn (_) {
-#(nrows - 1, j)
-  })
+  |> result.map_error(fn(_) { #(nrows - 1, j) })
 }
 
 fn find_obstacle_right(
@@ -131,9 +127,7 @@ fn find_obstacle_right(
     int.compare(acol - j, bcol - j)
   })
   |> list.first
-  |> result.map_error(fn (_) {
-#(i, ncols - 1)
-  })
+  |> result.map_error(fn(_) { #(i, ncols - 1) })
 }
 
 fn find_obstacle_left(
@@ -155,9 +149,7 @@ fn find_obstacle_left(
     int.compare(j - acol, j - bcol)
   })
   |> list.first
-  |> result.map_error(fn(_) {
-#(i, 0)
-  })
+  |> result.map_error(fn(_) { #(i, 0) })
 }
 
 fn fmt_tuple(tup: #(Int, Int)) -> String {
@@ -192,16 +184,30 @@ fn visit(
   curr: #(Int, Int),
   next: #(Int, Int),
 ) -> Set(#(Int, Int)) {
-  let path = between(curr, next)|> set.from_list
+  let path =
+    between(curr, next)
+    |> set.from_list
   let len = set.size(path)
-  io.println("visit " <> fmt_tuple(curr) <> " -> " <> fmt_tuple(next) <> " len: " <> int.to_string(len))
+  io.println(
+    "visit "
+    <> fmt_tuple(curr)
+    <> " -> "
+    <> fmt_tuple(next)
+    <> " len: "
+    <> int.to_string(len),
+  )
 
   path
   |> set.union(visited)
 }
 
-fn result_add_direction(r: Result(a, b), d: Direction) -> Result(#(Direction, a), #(Direction, b)) {
-  r |> result.map(fn (x) { #(d, x) }) |> result.map_error(fn (e) { #(d, e) })
+fn result_add_direction(
+  r: Result(a, b),
+  d: Direction,
+) -> Result(#(Direction, a), #(Direction, b)) {
+  r
+  |> result.map(fn(x) { #(d, x) })
+  |> result.map_error(fn(e) { #(d, e) })
 }
 
 fn step_guard_aux(
@@ -218,25 +224,29 @@ fn step_guard_aux(
       |> result.map(fn(obstacle) {
         let #(row, col) = obstacle
         #(row + 1, col)
-      }) |> result_add_direction(Right)
+      })
+      |> result_add_direction(Right)
     Right ->
       find_obstacle_right(obstacles, shape, i, j)
       |> result.map(fn(obstacle) {
         let #(row, col) = obstacle
         #(row, col - 1)
-      }) |> result_add_direction(Down)
+      })
+      |> result_add_direction(Down)
     Down ->
       find_obstacle_down(obstacles, shape, i, j)
       |> result.map(fn(obstacle) {
         let #(row, col) = obstacle
         #(row - 1, col)
-      }) |> result_add_direction(Left)
+      })
+      |> result_add_direction(Left)
     Left ->
       find_obstacle_left(obstacles, shape, i, j)
       |> result.map(fn(obstacle) {
         let #(row, col) = obstacle
         #(row, col + 1)
-      }) |> result_add_direction(Up)
+      })
+      |> result_add_direction(Up)
   }
   case next_result {
     Ok(#(next_dir, next)) ->

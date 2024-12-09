@@ -4,8 +4,8 @@ import day03.{Do, Dont, Mul}
 import day04
 import day05
 import day06.{Down, Left, Right, Up}
+import day07.{Add, Multiply}
 import gleam/list
-import gleam/set
 import glearray
 import gleeunit
 import gleeunit/should
@@ -348,4 +348,66 @@ pub fn day06_step_guard_test() {
   ]
   day06.step_guard(board)
   |> should.equal(26)
+}
+
+pub fn day07_parse_input_test() {
+  [
+    "190: 10 19", "3267: 81 40 27", "83: 17 5", "156: 15 6", "7290: 6 8 6 15",
+    "161011: 16 10 13", "192: 17 8 14", "21037: 9 7 18 13", "292: 11 6 16 20",
+  ]
+  |> day07.parse_input()
+  |> should.equal([
+    #(190, [10, 19]),
+    #(3267, [81, 40, 27]),
+    #(83, [17, 5]),
+    #(156, [15, 6]),
+    #(7290, [6, 8, 6, 15]),
+    #(161_011, [16, 10, 13]),
+    #(192, [17, 8, 14]),
+    #(21_037, [9, 7, 18, 13]),
+    #(292, [11, 6, 16, 20]),
+  ])
+}
+
+pub fn day07_operators_test() {
+  day07.operators(1)
+  |> should.equal([[Add], [Multiply]])
+  day07.operators(2)
+  |> should.equal([
+    [Add, Multiply],
+    [Multiply, Multiply],
+    [Add, Add],
+    [Multiply, Add],
+  ])
+}
+
+pub fn day07_eval_equation_test() {
+  day07.eval_equation([81, 40, 27], [Add, Multiply]) |> should.equal(3267)
+  day07.eval_equation([81, 40, 27], [Multiply, Add]) |> should.equal(3267)
+}
+
+pub fn day07_check_equation_test() {
+  [
+    #(190, [10, 19]),
+    #(3267, [81, 40, 27]),
+    #(83, [17, 5]),
+    #(156, [15, 6]),
+    #(7290, [6, 8, 6, 15]),
+    #(161_011, [16, 10, 13]),
+    #(192, [17, 8, 14]),
+    #(21_037, [9, 7, 18, 13]),
+    #(292, [11, 6, 16, 20]),
+  ]
+  |> list.map(day07.check_equation)
+  |> should.equal([190, 3267, 0, 0, 0, 0, 0, 0, 292])
+}
+
+pub fn day07_total_calibration_result_test() {
+[
+    "190: 10 19", "3267: 81 40 27", "83: 17 5", "156: 15 6", "7290: 6 8 6 15",
+    "161011: 16 10 13", "192: 17 8 14", "21037: 9 7 18 13", "292: 11 6 16 20",
+  ]
+  |> day07.parse_input
+  |> day07.total_calibration_result
+  |> should.equal(3749)
 }

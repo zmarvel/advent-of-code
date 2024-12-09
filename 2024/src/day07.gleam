@@ -42,20 +42,25 @@ pub fn parse_input(lines: List(String)) -> List(Equation) {
 pub type Operator {
   Add
   Multiply
+  Concat
 }
 
 pub fn operators(n: Int) -> List(List(Operator)) {
   case n {
     0 -> []
-    1 -> [[Add], [Multiply]]
+    1 -> [[Add], [Multiply], [Concat]]
     n if n > 0 -> {
       operators(n - 1)
       |> list.fold([], fn(acc, operator_list) {
-        [[Add, ..operator_list], [Multiply, ..operator_list], ..acc]
+        [[Add, ..operator_list], [Multiply, ..operator_list], [Concat, ..operator_list], ..acc]
       })
     }
     _ -> panic
   }
+}
+
+fn concat(a: Int, b: Int) -> Int {
+  parse_number(int.to_string(a) <> int.to_string(b))
 }
 
 pub fn eval_equation(numbers: List(Int), operators: List(Operator)) -> Int {
@@ -72,6 +77,9 @@ pub fn eval_equation(numbers: List(Int), operators: List(Operator)) -> Int {
         [Multiply, ..operators] -> {
           //io.println("multiply(" <> int.to_string(a) <> "," <> int.to_string(b) <>")")
           eval_equation([a * b, ..rest], operators)
+        }
+        [Concat, ..operators] -> {
+          eval_equation([concat(a, b), ..rest], operators)
         }
       }
   }

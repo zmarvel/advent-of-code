@@ -4,7 +4,7 @@ import day03.{Do, Dont, Mul}
 import day04
 import day05
 import day06.{Down, Left, Right, Up}
-import day07.{Add, Multiply}
+import day07.{Add, Multiply, Concat}
 import gleam/list
 import glearray
 import gleeunit
@@ -371,14 +371,9 @@ pub fn day07_parse_input_test() {
 
 pub fn day07_operators_test() {
   day07.operators(1)
-  |> should.equal([[Add], [Multiply]])
+  |> should.equal([[Add], [Multiply], [Concat]])
   day07.operators(2)
-  |> should.equal([
-    [Add, Multiply],
-    [Multiply, Multiply],
-    [Add, Add],
-    [Multiply, Add],
-  ])
+  |> should.equal([[Add, Concat], [Multiply, Concat], [Concat, Concat], [Add, Multiply], [Multiply, Multiply], [Concat, Multiply], [Add, Add], [Multiply, Add], [Concat, Add]])
 }
 
 pub fn day07_eval_equation_test() {
@@ -399,7 +394,7 @@ pub fn day07_check_equation_test() {
     #(292, [11, 6, 16, 20]),
   ]
   |> list.map(day07.check_equation)
-  |> should.equal([190, 3267, 0, 0, 0, 0, 0, 0, 292])
+  |> should.equal([190, 3267, 0, 156, 7290, 0, 192, 0, 292])
 }
 
 pub fn day07_total_calibration_result_test() {
@@ -409,5 +404,5 @@ pub fn day07_total_calibration_result_test() {
   ]
   |> day07.parse_input
   |> day07.total_calibration_result
-  |> should.equal(3749)
+  |> should.equal(11387)
 }

@@ -4,11 +4,15 @@ import day03.{Do, Dont, Mul}
 import day04
 import day05
 import day06.{Down, Left, Right, Up}
-import day07.{Add, Multiply, Concat}
+import day07.{Add, Concat, Multiply}
+import day08.{ParsedBoard}
+import gleam/dict
 import gleam/list
+import gleam/string
 import glearray
 import gleeunit
 import gleeunit/should
+import util.{RowCol}
 
 pub fn main() {
   gleeunit.main()
@@ -373,12 +377,24 @@ pub fn day07_operators_test() {
   day07.operators(1)
   |> should.equal([[Add], [Multiply], [Concat]])
   day07.operators(2)
-  |> should.equal([[Add, Concat], [Multiply, Concat], [Concat, Concat], [Add, Multiply], [Multiply, Multiply], [Concat, Multiply], [Add, Add], [Multiply, Add], [Concat, Add]])
+  |> should.equal([
+    [Add, Concat],
+    [Multiply, Concat],
+    [Concat, Concat],
+    [Add, Multiply],
+    [Multiply, Multiply],
+    [Concat, Multiply],
+    [Add, Add],
+    [Multiply, Add],
+    [Concat, Add],
+  ])
 }
 
 pub fn day07_eval_equation_test() {
-  day07.eval_equation([81, 40, 27], [Add, Multiply]) |> should.equal(3267)
-  day07.eval_equation([81, 40, 27], [Multiply, Add]) |> should.equal(3267)
+  day07.eval_equation([81, 40, 27], [Add, Multiply])
+  |> should.equal(3267)
+  day07.eval_equation([81, 40, 27], [Multiply, Add])
+  |> should.equal(3267)
 }
 
 pub fn day07_check_equation_test() {
@@ -398,11 +414,60 @@ pub fn day07_check_equation_test() {
 }
 
 pub fn day07_total_calibration_result_test() {
-[
+  [
     "190: 10 19", "3267: 81 40 27", "83: 17 5", "156: 15 6", "7290: 6 8 6 15",
     "161011: 16 10 13", "192: 17 8 14", "21037: 9 7 18 13", "292: 11 6 16 20",
   ]
   |> day07.parse_input
   |> day07.total_calibration_result
-  |> should.equal(11387)
+  |> should.equal(11_387)
+}
+
+pub fn day08_parse_board_test() {
+  []
+  |> day08.parse_board
+  |> should.equal(ParsedBoard(dict.from_list([]), #(0, 0)))
+
+  "............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............"
+  |> string.split("\n")
+  |> day08.parse_board
+  |> should.equal(
+    ParsedBoard(
+      dict.from_list([
+        #("0", [RowCol(4, 4), RowCol(3, 7), RowCol(2, 5), RowCol(1, 8)]),
+        #("A", [RowCol(9, 9), RowCol(8, 8), RowCol(5, 6)]),
+      ]),
+      #(12, 12),
+    ),
+  )
+}
+
+pub fn day08_count_antinodes_test() {
+  "............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............"
+  |> string.split("\n")
+  |> day08.parse_board
+  |> day08.count_antinodes
+  |> should.equal(14)
 }

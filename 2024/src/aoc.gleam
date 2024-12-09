@@ -6,6 +6,7 @@ import day04
 import day05
 import day06
 import day07
+import day08
 
 pub fn main() {
   case argv.load().arguments {
@@ -16,6 +17,7 @@ pub fn main() {
     ["day05"] -> day05.main()
     ["day06"] -> day06.main()
     ["day07"] -> day07.main()
+    ["day08"] -> day08.main()
     _ -> panic as "invalid argument"
   }
 }

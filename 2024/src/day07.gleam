@@ -52,7 +52,12 @@ pub fn operators(n: Int) -> List(List(Operator)) {
     n if n > 0 -> {
       operators(n - 1)
       |> list.fold([], fn(acc, operator_list) {
-        [[Add, ..operator_list], [Multiply, ..operator_list], [Concat, ..operator_list], ..acc]
+        [
+          [Add, ..operator_list],
+          [Multiply, ..operator_list],
+          [Concat, ..operator_list],
+          ..acc
+        ]
       })
     }
     _ -> panic
@@ -70,7 +75,7 @@ pub fn eval_equation(numbers: List(Int), operators: List(Operator)) -> Int {
     [a, b, ..rest] ->
       case operators {
         [] -> panic
-        [Add, ..operators] ->{
+        [Add, ..operators] -> {
           //io.println("add(" <> int.to_string(a) <> "," <> int.to_string(b) <>")")
           eval_equation([a + b, ..rest], operators)
         }
@@ -105,12 +110,15 @@ pub fn check_equation(e: Equation) -> Int {
 }
 
 pub fn total_calibration_result(equations: List(Equation)) {
-  equations |> list.map(check_equation) |> int.sum
+  equations
+  |> list.map(check_equation)
+  |> int.sum
 }
 
 pub fn main() {
-  let total = read_lines("inputs/day07.input")
-  |> parse_input()
-  |> total_calibration_result()
+  let total =
+    read_lines("inputs/day07.input")
+    |> parse_input()
+    |> total_calibration_result()
   io.println("Total: " <> int.to_string(total))
 }
